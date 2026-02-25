@@ -1162,10 +1162,403 @@ export default function Home() {
             </div>
           )}
 
-          {/* 이하 TIMER/VOTE/RESULT/NIGHT_* UI는 그대로 두셔도 됩니다.
-              (이미 playSfx / setBgmKind 는 audioOn 기준으로 동작) */}
+          {/* 타이머 */}
+          {phase === "TIMER" && (
+            <div className={"mt-6 " + glowCard + " p-4"}>
+              <h2 className="font-bold text-lg">타이머</h2>
 
-          {/* ... (당신이 붙여준 나머지 JSX 그대로) ... */}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setPreset("Day")}
+                  className={`py-3 rounded-xl border ${
+                    mode === "Day"
+                      ? "border-red-500/60 bg-red-500/10 text-red-200 shadow-[0_0_18px_rgba(255,0,60,0.25)]"
+                      : "border-white/10 bg-white/5 hover:bg-white/10"
+                  }`}
+                >
+                  낮 (5:00)
+                </button>
+                <button
+                  onClick={() => setPreset("Night")}
+                  className={`py-3 rounded-xl border ${
+                    mode === "Night"
+                      ? "border-cyan-400/50 bg-cyan-400/10 text-cyan-200 shadow-[0_0_18px_rgba(0,255,255,0.18)]"
+                      : "border-white/10 bg-white/5 hover:bg-white/10"
+                  }`}
+                >
+                  밤 (2:00)
+                </button>
+              </div>
+
+              <div className="mt-5 text-center">
+                <div className={"text-white/60 text-sm " + (dangerPulse ? "opacity-80" : "")}>
+                  {mode === "Night"
+                    ? "조용히… 누군가 움직이고 있어요."
+                    : "토론 시간… 누구도 믿지 마세요."}
+                </div>
+                <div className="text-6xl font-extrabold mt-2 tracking-tight">
+                  {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => {
+                    playSfx("click");
+                    setRunning((r) => !r);
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10"
+                >
+                  {running ? "일시정지" : "시작"}
+                </button>
+                <button
+                  onClick={() => {
+                    playSfx("click");
+                    setSecondsLeft(mode === "Day" ? 300 : 120);
+                    setRunning(false);
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10"
+                >
+                  리셋
+                </button>
+              </div>
+
+              <button
+                onClick={gotoVote}
+                disabled={gameOver}
+                className={`mt-4 w-full py-3 rounded-xl font-extrabold bg-gradient-to-r from-red-600 via-fuchsia-600 to-cyan-500 hover:opacity-90 ${
+                  gameOver ? "opacity-40 pointer-events-none" : ""
+                }`}
+              >
+                투표로 이동
+              </button>
+            </div>
+          )}
+
+          {/* 투표 */}
+          {phase === "VOTE" && (
+            <div className={"mt-6 " + glowCard + " p-4"}>
+              <h2 className="font-bold text-lg">투표</h2>
+
+              <select
+                value={selected}
+                onChange={(e) => setSelected(e.target.value)}
+                className="mt-3 w-full px-3 py-3 rounded-xl bg-white text-black"
+                disabled={gameOver}
+              >
+                <option value="">참가자 선택</option>
+                {alivePlayers.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={addVote}
+                disabled={gameOver}
+                className={`mt-3 w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 ${
+                  gameOver ? "opacity-40 pointer-events-none" : ""
+                }`}
+              >
+                + 표 추가
+              </button>
+
+              <div className="mt-4 space-y-2">
+                {Object.keys(votes).map((p) => (
+                  <div
+                    key={p}
+                    className="flex justify-between rounded-xl px-3 py-2 bg-white/5 border border-white/10"
+                  >
+                    <span>{p}</span>
+                    <span className="font-extrabold">{votes[p] ?? 0}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  playSfx("click");
+                  setPhase("RESULT");
+                }}
+                className="mt-4 w-full py-3 rounded-xl font-extrabold bg-gradient-to-r from-red-600 to-fuchsia-600 hover:opacity-90"
+              >
+                결과 보기
+              </button>
+            </div>
+          )}
+
+          {/* 결과 */}
+          {phase === "RESULT" && (
+            <div className={"mt-6 " + glowCard + " p-4"}>
+              <h2 className="font-bold text-lg">결과</h2>
+
+              {gameOver && (
+                <div className="mt-3 rounded-xl border border-white/10 bg-black/50 px-3 py-3">
+                  <div className="text-sm font-extrabold">
+                    🏁 게임 종료 · {winner === "MAFIA" ? "마피아 승" : "시민 승"}
+                  </div>
+                  <div className="text-xs text-white/60 mt-1">새 게임을 눌러 다시 시작하세요.</div>
+                </div>
+              )}
+
+              {lastEvent && (
+                <div className="mt-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/80">
+                  {lastEvent}
+                </div>
+              )}
+
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-sm font-bold">플레이어 상태</div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {players.map((p) => {
+                    const dead = alive[p] === false;
+                    return (
+                      <span
+                        key={p}
+                        className={
+                          "text-xs px-2 py-1 rounded-full border " +
+                          (dead
+                            ? "border-red-500/40 bg-red-500/10 text-red-200"
+                            : "border-white/10 bg-white/5 text-white/70")
+                        }
+                      >
+                        {p} {dead ? "✖ 제거" : "✔ 생존"}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-bold">투표 집행</div>
+                  <div className="text-xs text-white/50">
+                    {topVoted ? `1등: ${topVoted.player} (${topVoted.votes}표)` : "1등 동점/투표 없음"}
+                  </div>
+                </div>
+
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={executeVote}
+                    disabled={gameOver}
+                    className={`flex-1 py-3 rounded-xl font-extrabold bg-gradient-to-r from-red-600 to-fuchsia-600 hover:opacity-90 ${
+                      gameOver ? "opacity-40 pointer-events-none" : ""
+                    }`}
+                  >
+                    집행 확정
+                  </button>
+                  <button
+                    onClick={undoLastExecute}
+                    disabled={gameOver}
+                    className={`flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 ${
+                      gameOver ? "opacity-40 pointer-events-none" : ""
+                    }`}
+                  >
+                    되돌리기
+                  </button>
+                </div>
+
+                <div className="mt-2 text-xs text-white/50">
+                  * 집행 후 “밤 시작”을 눌러 사회자 없이 밤 행동을 진행하세요.
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={beginNight}
+                  disabled={gameOver}
+                  className={`flex-1 py-3 rounded-xl font-extrabold bg-gradient-to-r from-cyan-500 via-fuchsia-600 to-red-600 hover:opacity-90 ${
+                    gameOver ? "opacity-40 pointer-events-none" : ""
+                  }`}
+                >
+                  🌙 밤 시작(사회자 없음)
+                </button>
+
+                <button
+                  onClick={resetAll}
+                  className="flex-1 py-3 rounded-xl font-extrabold bg-gradient-to-r from-red-600 via-fuchsia-600 to-cyan-500 hover:opacity-90"
+                >
+                  새 게임
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ====== 밤 액션: 휴대폰 넘기기 ====== */}
+          {phase === "NIGHT_HANDOFF" && (
+            <div className={"mt-6 " + glowCard + " p-4"}>
+              <h2 className="font-bold text-lg">밤 행동</h2>
+              <p className="text-sm text-white/70 mt-1">
+                모두 눈을 감으세요. 휴대폰을{" "}
+                <span className="text-white font-semibold">
+                  {nightTurn === "MAFIA" ? "마피아" : nightTurn === "DOCTOR" ? "의사" : "경찰"}
+                </span>
+                에게 넘겨주세요.
+              </p>
+
+              <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4 shadow-[0_0_30px_rgba(0,255,255,0.12)]">
+                <div className="text-white/70 text-sm">다음 사람이 직접 “넘겨받았음”을 눌러주세요.</div>
+
+                <button
+                  onClick={proceedAfterHandoff}
+                  className="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-fuchsia-600 hover:opacity-90"
+                >
+                  ✅ 넘겨받았음
+                </button>
+
+                <div className="mt-3 text-xs text-white/50">
+                  * 이 화면에서는 아무 정보도 노출되지 않습니다. (역할 사망 시 자동 스킵)
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ====== 밤 액션: 마피아 ====== */}
+          {phase === "NIGHT_MAFIA" && (
+            <div className={"mt-6 " + glowCard + " p-4"}>
+              <h2 className="font-bold text-lg">🌙 마피아 행동</h2>
+
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-xs text-white/60 mb-1">제거 대상 선택</div>
+
+                <select
+                  value={mafiaTarget}
+                  onChange={(e) => setMafiaTarget(e.target.value)}
+                  className="w-full px-3 py-3 rounded-xl bg-white text-black"
+                  disabled={gameOver}
+                >
+                  <option value="">선택</option>
+                  {alivePlayers.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  onClick={mafiaConfirm}
+                  disabled={gameOver}
+                  className={`mt-3 w-full py-3 rounded-xl font-extrabold bg-gradient-to-r from-red-600 to-fuchsia-600 hover:opacity-90 ${
+                    gameOver ? "opacity-40 pointer-events-none" : ""
+                  }`}
+                >
+                  제거 대상 확정
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ====== 밤 액션: 의사 ====== */}
+          {phase === "NIGHT_DOCTOR" && (
+            <div className={"mt-6 " + glowCard + " p-4"}>
+              <h2 className="font-bold text-lg">💉 의사 행동</h2>
+
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-xs text-white/60 mb-1">치료(부활) 대상 선택</div>
+
+                <select
+                  value={doctorTarget}
+                  onChange={(e) => setDoctorTarget(e.target.value)}
+                  className="w-full px-3 py-3 rounded-xl bg-white text-black"
+                  disabled={gameOver}
+                >
+                  <option value="">선택</option>
+                  {players.map((p) => (
+                    <option key={p} value={p}>
+                      {p} {alive[p] === false ? "(제거됨)" : ""}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  onClick={doctorConfirm}
+                  disabled={gameOver}
+                  className={`mt-3 w-full py-3 rounded-xl font-extrabold bg-gradient-to-r from-emerald-500 to-cyan-500 hover:opacity-90 ${
+                    gameOver ? "opacity-40 pointer-events-none" : ""
+                  }`}
+                >
+                  치료 대상 확정
+                </button>
+
+                <div className="mt-2 text-xs text-white/50">* 의사 본인({doctorPlayer || "의사"}) 치료는 게임당 1회 제한</div>
+              </div>
+            </div>
+          )}
+
+          {/* ====== 밤 액션: 경찰 ====== */}
+          {phase === "NIGHT_POLICE" && (
+            <div className={"mt-6 " + glowCard + " p-4"}>
+              <h2 className="font-bold text-lg">🔎 경찰 행동</h2>
+              <p className="text-sm text-white/70 mt-1">
+                조사 결과는 <span className="text-white font-semibold">지금 화면에서만</span> 보여집니다. (밤 종료 화면에서는 숨김)
+              </p>
+
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-xs text-white/60 mb-1">조사 대상 선택</div>
+
+                <select
+                  value={policeTarget}
+                  onChange={(e) => setPoliceTarget(e.target.value)}
+                  className="w-full px-3 py-3 rounded-xl bg-white text-black"
+                  disabled={gameOver}
+                >
+                  <option value="">선택</option>
+                  {alivePlayers.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  onClick={policeConfirm}
+                  disabled={gameOver}
+                  className={`mt-3 w-full py-3 rounded-xl font-extrabold bg-gradient-to-r from-cyan-500 to-fuchsia-600 hover:opacity-90 ${
+                    gameOver ? "opacity-40 pointer-events-none" : ""
+                  }`}
+                >
+                  조사하기
+                </button>
+
+                {policeResult && (
+                  <div className="mt-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/80">
+                    {policeResult}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ====== 밤 종료/결과 적용 ====== */}
+          {phase === "NIGHT_SUMMARY" && (
+            <div className={"mt-6 " + glowCard + " p-4"}>
+              <h2 className="font-bold text-lg">밤 종료</h2>
+              <p className="text-sm text-white/70 mt-1">이제 밤 결과를 적용하고 낮으로 넘어갑니다.</p>
+
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-xs text-white/60">밤 행동 요약(비공개)</div>
+                <div className="mt-2 text-sm text-white/80">
+                  {pendingKill ? `마피아 선택 완료` : `마피아 선택 없음`} · {pendingHeal ? `의사 선택 완료` : `의사 선택 없음`} ·{" "}
+                  {policeAlive ? `경찰 조사 완료` : `경찰 없음/사망`}
+                </div>
+
+                <button
+                  onClick={applyNightOutcome}
+                  disabled={gameOver}
+                  className={`mt-3 w-full py-3 rounded-xl font-extrabold bg-gradient-to-r from-red-600 via-fuchsia-600 to-cyan-500 hover:opacity-90 ${
+                    gameOver ? "opacity-40 pointer-events-none" : ""
+                  }`}
+                >
+                  🌅 밤 결과 적용하고 낮 시작
+                </button>
+
+                <div className="mt-2 text-xs text-white/45">
+                  * 마피아 공격과 의사 치료는 동시에 적용됩니다. 같은 대상이면 생존합니다.
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="mt-8 text-center text-xs text-white/30">오프라인 진행용 • 서버 없이 사용 가능</div>
         </div>
