@@ -470,26 +470,15 @@ export default function Home() {
     return "SUMMARY";
   };
 
+  // ✅ (수정) 역할별 handoff에서는 멘트 최소화/무음 (요청사항)
   const goNightHandoff = (turn: "MAFIA" | "DOCTOR" | "POLICE") => {
     setNightTurn(turn);
     setNightTouchStep("WAIT_ALL");
     setPhase("NIGHT_HANDOFF");
-
-    if (turn === "MAFIA") {
-      speak(
-        "밤이 되었습니다. 모두 눈을 감으세요. 마피아 차례입니다. 휴대폰을 중앙에 놓으면 마피아는 조용히 넘겨받았음을 누르세요.",
-      );
-    } else if (turn === "DOCTOR") {
-      speak(
-        "의사 차례입니다. 휴대폰을 중앙에 놓으면 의사는 조용히 넘겨받았음을 누르세요.",
-      );
-    } else {
-      speak(
-        "경찰 차례입니다. 휴대폰을 중앙에 놓으면 경찰은 조용히 넘겨받았음을 누르세요.",
-      );
-    }
+    // ✅ 여기서는 말하지 않음(요청)
   };
 
+  // ✅ (수정) 넘겨받았음 -> 각 역할 화면 진입 시, 요청 멘트로만 speak
   const proceedAfterHandoff = () => {
     playSfx("click");
 
@@ -497,7 +486,6 @@ export default function Home() {
       const next = nextNightTurn("MAFIA");
       if (next === "SUMMARY") {
         setPhase("NIGHT_SUMMARY");
-        speak("밤 행동이 모두 종료되었습니다. 밤 결과를 적용하고 낮을 시작하세요.");
       } else {
         goNightHandoff(next);
       }
@@ -507,7 +495,6 @@ export default function Home() {
       const next = nextNightTurn("DOCTOR");
       if (next === "SUMMARY") {
         setPhase("NIGHT_SUMMARY");
-        speak("밤 행동이 모두 종료되었습니다. 밤 결과를 적용하고 낮을 시작하세요.");
       } else {
         goNightHandoff(next);
       }
@@ -515,7 +502,6 @@ export default function Home() {
     }
     if (nightTurn === "POLICE" && !policeAlive) {
       setPhase("NIGHT_SUMMARY");
-      speak("밤 행동이 모두 종료되었습니다. 밤 결과를 적용하고 낮을 시작하세요.");
       return;
     }
 
@@ -523,13 +509,13 @@ export default function Home() {
 
     if (nightTurn === "MAFIA") {
       setPhase("NIGHT_MAFIA");
-      speak("마피아 차례입니다. 모두 손가락을 화면에 올려주세요. 준비되면 마피아는 시작을 누르고, 제거할 대상을 빠르게 터치하세요.");
+      speak("마피아는 조용히 고개를 들어 제거할 플레이어를 클릭하세요.");
     } else if (nightTurn === "DOCTOR") {
       setPhase("NIGHT_DOCTOR");
-      speak("의사 차례입니다. 모두 손가락을 화면에 올려주세요. 준비되면 의사는 시작을 누르고, 치료할 대상을 빠르게 터치하세요.");
+      speak("의사는 조용히 고개를 들어 치료할 플레이어를 클릭하세요.");
     } else {
       setPhase("NIGHT_POLICE");
-      speak("경찰 차례입니다. 모두 손가락을 화면에 올려주세요. 준비되면 경찰은 시작을 누르고, 조사할 대상을 빠르게 터치하세요.");
+      speak("경찰은 조용히 고개를 들어 조사할 대상을 클릭하세요.");
     }
   };
 
@@ -619,7 +605,9 @@ export default function Home() {
       setMode("Day");
       setSecondsLeft(300);
       setRunning(false);
-      speak("낮이 시작됩니다. 토론을 진행하세요. 시간이 끝나면 투표로 이동합니다.");
+      speak(
+        "낮이 시작됩니다. 토론을 진행하세요. 시간이 끝나면 투표로 이동합니다.",
+      );
       return;
     }
     setRevealIndex(revealIndex + 1);
@@ -641,7 +629,9 @@ export default function Home() {
     setVotes(init);
     setSelected("");
     setPhase("VOTE");
-    speak("투표 단계입니다. 의심되는 사람을 선택하고, 플러스 버튼으로 표를 추가하세요.");
+    speak(
+      "투표 단계입니다. 의심되는 사람을 선택하고, 플러스 버튼으로 표를 추가하세요.",
+    );
   };
 
   const addVote = () => {
@@ -713,6 +703,7 @@ export default function Home() {
   };
 
   // ====== ✅ 사회자 없는 “밤 액션 플로우” ======
+  // ✅ (수정) 밤 시작 멘트: 딱 1줄만 (요청사항)
   const beginNight = () => {
     playSfx("click");
     if (gameOver) return;
@@ -724,6 +715,8 @@ export default function Home() {
     setPoliceTarget("");
     setPoliceResult("");
     setNightTouchStep("WAIT_ALL");
+
+    speak("모두 고개를 숙이고 눈을 감고 한 손가락만 휴대폰에 얹어주세요.");
 
     if (mafiaAlive) {
       goNightHandoff("MAFIA");
@@ -739,14 +732,13 @@ export default function Home() {
     }
 
     setPhase("NIGHT_SUMMARY");
-    speak("살아있는 밤 역할이 없습니다. 밤을 종료하고 낮을 시작하세요.");
   };
 
   // ✅ “손가락 얹기” 공통 UI용: 역할이 대상 탭하면 즉시 확정되는 방식
   const startTouchSelect = () => {
     playSfx("click");
     setNightTouchStep("SELECT");
-    speak("이제 해당 역할만 대상을 빠르게 터치하세요.");
+    // ✅ 요청 멘트 체계에 맞춰: 추가 멘트 없음
   };
 
   const mafiaTapTarget = (p: string) => {
@@ -756,6 +748,7 @@ export default function Home() {
 
     setPendingKill(p);
     setLastEvent("🌙 마피아가 대상을 선택했습니다.");
+    // ✅ 선택 완료 멘트는 유지(원하면 무음으로도 가능)
     speak("선택 완료. 휴대폰을 내려두고 다음 역할에게 넘기세요.");
 
     const next = nextNightTurn("MAFIA");
@@ -764,7 +757,6 @@ export default function Home() {
 
     if (next === "SUMMARY") {
       setPhase("NIGHT_SUMMARY");
-      speak("밤 행동이 모두 종료되었습니다. 밤 결과를 적용하고 낮을 시작하세요.");
     } else {
       goNightHandoff(next);
     }
@@ -785,6 +777,7 @@ export default function Home() {
 
     setPendingHeal(p);
     setLastEvent("💉 의사가 대상을 선택했습니다.");
+    // ✅ 선택 완료 멘트는 유지(원하면 무음으로도 가능)
     speak("선택 완료. 휴대폰을 내려두고 다음 역할에게 넘기세요.");
 
     const next = nextNightTurn("DOCTOR");
@@ -793,12 +786,12 @@ export default function Home() {
 
     if (next === "SUMMARY") {
       setPhase("NIGHT_SUMMARY");
-      speak("밤 행동이 모두 종료되었습니다. 밤 결과를 적용하고 낮을 시작하세요.");
     } else {
       goNightHandoff(next);
     }
   };
 
+  // ✅ (수정) 경찰: 조사 결과 멘트는 “경찰은 조사결과를 확인해주세요”만
   const policeTapTarget = (p: string) => {
     playSfx("click");
     if (gameOver) return;
@@ -810,11 +803,12 @@ export default function Home() {
 
     setPoliceResult(msg);
     setLastEvent(msg);
-    speak(msg);
+
+    // ✅ 요청 멘트
+    speak("경찰은 조사결과를 확인해주세요.");
 
     setPoliceTarget("");
     setNightTouchStep("WAIT_ALL");
-    // 경찰은 결과 확인 시간이 필요해서 바로 SUMMARY로 보내되, 버튼으로 마무리
   };
 
   const applyNightOutcome = () => {
@@ -1045,7 +1039,10 @@ export default function Home() {
                   <h2 className="font-bold text-lg">인원 선택</h2>
                   <span className="text-sm text-white/70">
                     현재:{" "}
-                    <span className="font-extrabold text-red-300">{playerCount}</span>명
+                    <span className="font-extrabold text-red-300">
+                      {playerCount}
+                    </span>
+                    명
                   </span>
                 </div>
 
@@ -1158,7 +1155,9 @@ export default function Home() {
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                     <div className="text-white/50 text-xs">시민</div>
-                    <div className="text-xl font-extrabold">{rolePlan.citizen}</div>
+                    <div className="text-xl font-extrabold">
+                      {rolePlan.citizen}
+                    </div>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                     <div className="text-white/50 text-xs">경찰</div>
@@ -1193,15 +1192,17 @@ export default function Home() {
 
               <p className="text-sm text-white/70 mt-1">
                 휴대폰을{" "}
-                <span className="text-white font-semibold">{currentPlayer}</span> 님에게
-                넘겨주세요
+                <span className="text-white font-semibold">{currentPlayer}</span>{" "}
+                님에게 넘겨주세요
               </p>
 
               {!confirmHandOff ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4 shadow-[0_0_30px_rgba(255,0,60,0.15)]">
                   <div className="text-white/70 text-sm">
                     화면을 몰래 보지 않게,{" "}
-                    <span className="text-white font-semibold">다음 사람이 직접</span>{" "}
+                    <span className="text-white font-semibold">
+                      다음 사람이 직접
+                    </span>{" "}
                     “넘겨받았음”을 눌러주세요.
                   </div>
 
@@ -1220,7 +1221,9 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4 text-center shadow-[0_0_30px_rgba(255,0,60,0.15)]">
-                  <div className="text-white/60 text-sm">버튼을 눌러 역할을 확인하세요</div>
+                  <div className="text-white/60 text-sm">
+                    버튼을 눌러 역할을 확인하세요
+                  </div>
 
                   <div
                     className={
@@ -1230,13 +1233,17 @@ export default function Home() {
                   >
                     {!isRevealed ? (
                       <>
-                        <div className="text-white/70 text-sm">아직 공개되지 않았습니다</div>
+                        <div className="text-white/70 text-sm">
+                          아직 공개되지 않았습니다
+                        </div>
                         <button
                           onClick={() => {
                             playSfx("reveal");
                             setIsRevealed(true);
                             setFlip(true);
-                            speak("역할을 확인했습니다. 확인 완료를 누르고 휴대폰을 내려두세요.");
+                            speak(
+                              "역할을 확인했습니다. 확인 완료를 누르고 휴대폰을 내려두세요.",
+                            );
                           }}
                           className="mt-3 px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-fuchsia-600 hover:opacity-90"
                         >
@@ -1298,13 +1305,16 @@ export default function Home() {
               </div>
 
               <div className="mt-5 text-center">
-                <div className={"text-white/60 text-sm " + (dangerPulse ? "opacity-80" : "")}>
+                <div
+                  className={"text-white/60 text-sm " + (dangerPulse ? "opacity-80" : "")}
+                >
                   {mode === "Night"
                     ? "조용히… 누군가 움직이고 있어요."
                     : "토론 시간… 누구도 믿지 마세요."}
                 </div>
                 <div className="text-6xl font-extrabold mt-2 tracking-tight">
-                  {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}
+                  {Math.floor(secondsLeft / 60)}:
+                  {String(secondsLeft % 60).padStart(2, "0")}
                 </div>
               </div>
 
@@ -1477,7 +1487,7 @@ export default function Home() {
                 </div>
 
                 <div className="mt-2 text-xs text-white/50">
-                  * 집행 후 “밤 시작”을 눌러 사회자 없이 밤 행동을 진행하세요.
+                  * 집행 후 “밤 시작”을 눌러 진행하세요.
                 </div>
               </div>
 
@@ -1489,7 +1499,7 @@ export default function Home() {
                     gameOver ? "opacity-40 pointer-events-none" : ""
                   }`}
                 >
-                  🌙 밤 시작(손가락 방식)
+                  🌙 밤 시작
                 </button>
 
                 <button
@@ -1509,7 +1519,11 @@ export default function Home() {
               <p className="text-sm text-white/70 mt-1">
                 모두 눈을 감으세요. 휴대폰을{" "}
                 <span className="text-white font-semibold">
-                  {nightTurn === "MAFIA" ? "마피아" : nightTurn === "DOCTOR" ? "의사" : "경찰"}
+                  {nightTurn === "MAFIA"
+                    ? "마피아"
+                    : nightTurn === "DOCTOR"
+                      ? "의사"
+                      : "경찰"}
                 </span>
                 에게 넘겨주세요.
               </p>
@@ -1533,39 +1547,28 @@ export default function Home() {
             </div>
           )}
 
-          {/* ====== 밤 액션: 마피아 (손가락 방식) ====== */}
+          {/* ====== 밤 액션: 마피아 ====== */}
           {phase === "NIGHT_MAFIA" && (
             <div className={"mt-6 " + glowCard + " p-4"}>
-              <h2 className="font-bold text-lg">🌙 마피아 행동</h2>
-              <p className="text-sm text-white/70 mt-1">
-                모두 손가락을 화면에 올려두고, <span className="text-white font-semibold">마피아만</span>{" "}
-                대상을 누릅니다.
-              </p>
+              <h2 className="font-bold text-lg">🌙 마피아</h2>
 
               {nightTouchStep === "WAIT_ALL" ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4">
                   <div className="text-white/70 text-sm">
-                    ✅ 모두 손가락을 얹었다면, 마피아가 “시작”을 누르세요.
+                    (아무 표시 없음) 마피아만 “시작”을 누르세요.
                   </div>
                   <button
                     onClick={startTouchSelect}
                     className="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-red-600 to-fuchsia-600 hover:opacity-90"
                   >
-                    ▶ 시작 (마피아만)
+                    ▶ 시작
                   </button>
-                  <div className="mt-3 text-xs text-white/50">
-                    * 시작을 누르면 대상 버튼이 나타납니다.
-                  </div>
                 </div>
               ) : (
                 <div className="mt-4 space-y-2">
                   {alivePlayers.map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => mafiaTapTarget(p)}
-                      className={bigChoiceBtn}
-                    >
-                      <div className="text-sm text-white/60">대상 선택</div>
+                    <button key={p} onClick={() => mafiaTapTarget(p)} className={bigChoiceBtn}>
+                      <div className="text-sm text-white/60">제거 대상</div>
                       <div className="text-lg font-extrabold">{p}</div>
                     </button>
                   ))}
@@ -1574,40 +1577,32 @@ export default function Home() {
             </div>
           )}
 
-          {/* ====== 밤 액션: 의사 (손가락 방식) ====== */}
+          {/* ====== 밤 액션: 의사 ====== */}
           {phase === "NIGHT_DOCTOR" && (
             <div className={"mt-6 " + glowCard + " p-4"}>
-              <h2 className="font-bold text-lg">💉 의사 행동</h2>
-              <p className="text-sm text-white/70 mt-1">
-                모두 손가락을 화면에 올려두고, <span className="text-white font-semibold">의사만</span>{" "}
-                대상을 누릅니다.
-              </p>
+              <h2 className="font-bold text-lg">💉 의사</h2>
 
               {nightTouchStep === "WAIT_ALL" ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4">
                   <div className="text-white/70 text-sm">
-                    ✅ 모두 손가락을 얹었다면, 의사가 “시작”을 누르세요.
+                    (아무 표시 없음) 의사만 “시작”을 누르세요.
                   </div>
                   <button
                     onClick={startTouchSelect}
                     className="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:opacity-90"
                   >
-                    ▶ 시작 (의사만)
+                    ▶ 시작
                   </button>
                   <div className="mt-3 text-xs text-white/50">
-                    * 의사 본인 치료는 게임당 1회 제한입니다.
+                    * 의사 본인 치료는 게임당 1회 제한
                   </div>
                 </div>
               ) : (
                 <div className="mt-4 space-y-2">
                   {players.map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => doctorTapTarget(p)}
-                      className={bigChoiceBtn}
-                    >
+                    <button key={p} onClick={() => doctorTapTarget(p)} className={bigChoiceBtn}>
                       <div className="text-sm text-white/60">
-                        치료 대상 선택 {alive[p] === false ? "(제거됨)" : ""}
+                        치료 대상 {alive[p] === false ? "(제거됨)" : ""}
                       </div>
                       <div className="text-lg font-extrabold">
                         {p}
@@ -1625,14 +1620,10 @@ export default function Home() {
             </div>
           )}
 
-          {/* ====== 밤 액션: 경찰 (손가락 방식) ====== */}
+          {/* ====== 밤 액션: 경찰 ====== */}
           {phase === "NIGHT_POLICE" && (
             <div className={"mt-6 " + glowCard + " p-4"}>
-              <h2 className="font-bold text-lg">🔎 경찰 행동</h2>
-              <p className="text-sm text-white/70 mt-1">
-                모두 손가락을 화면에 올려두고, <span className="text-white font-semibold">경찰만</span>{" "}
-                조사 대상을 누릅니다. 결과는 이 화면에서만 표시됩니다.
-              </p>
+              <h2 className="font-bold text-lg">🔎 경찰</h2>
 
               {policeResult ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4">
@@ -1641,37 +1632,30 @@ export default function Home() {
                     onClick={() => {
                       playSfx("click");
                       setPhase("NIGHT_SUMMARY");
-                      speak("경찰 조사가 끝났습니다. 이제 밤 결과를 적용하고 낮을 시작하세요.");
+                      // ✅ 추가 멘트 최소화
                     }}
                     className="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-fuchsia-600 hover:opacity-90"
                   >
-                    확인 완료 · 밤 종료로
+                    확인 완료
                   </button>
-                  <div className="mt-3 text-xs text-white/50">
-                    * 휴대폰을 내려두고 모두 다시 눈을 감으세요.
-                  </div>
                 </div>
               ) : nightTouchStep === "WAIT_ALL" ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4">
                   <div className="text-white/70 text-sm">
-                    ✅ 모두 손가락을 얹었다면, 경찰이 “시작”을 누르세요.
+                    (아무 표시 없음) 경찰만 “시작”을 누르세요.
                   </div>
                   <button
                     onClick={startTouchSelect}
                     className="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-fuchsia-600 hover:opacity-90"
                   >
-                    ▶ 시작 (경찰만)
+                    ▶ 시작
                   </button>
                 </div>
               ) : (
                 <div className="mt-4 space-y-2">
                   {alivePlayers.map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => policeTapTarget(p)}
-                      className={bigChoiceBtn}
-                    >
-                      <div className="text-sm text-white/60">조사 대상 선택</div>
+                    <button key={p} onClick={() => policeTapTarget(p)} className={bigChoiceBtn}>
+                      <div className="text-sm text-white/60">조사 대상</div>
                       <div className="text-lg font-extrabold">{p}</div>
                     </button>
                   ))}
@@ -1684,9 +1668,6 @@ export default function Home() {
           {phase === "NIGHT_SUMMARY" && (
             <div className={"mt-6 " + glowCard + " p-4"}>
               <h2 className="font-bold text-lg">밤 종료</h2>
-              <p className="text-sm text-white/70 mt-1">
-                이제 밤 결과를 적용하고 낮으로 넘어갑니다.
-              </p>
 
               <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
                 <div className="text-xs text-white/60">밤 행동 요약(비공개)</div>
