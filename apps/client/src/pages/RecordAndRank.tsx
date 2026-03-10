@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ensureUserHash, useGameStore } from '../store/gameStore';
 import { API_BASE } from '../services/api';
 import { getStreakState } from '../services/streak';
-import { shareToKakao, shareToX, shareToInstagram } from '../services/share';
+import { copyShareLink } from '../services/share';
 
 interface LeaderboardEntry {
   rank: number;
@@ -36,7 +36,7 @@ export default function RecordAndRank() {
   const [loading, setLoading] = useState(true);
   const [meData, setMeData] = useState<MeSummary | null>(null);
   const [streakState, setStreakState] = useState(() => getStreakState());
-  const [shareError, setShareError] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [myUserHash, setMyUserHash] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
@@ -87,29 +87,13 @@ export default function RecordAndRank() {
     isChampion: meData?.best_level === 20,
   };
 
-  const handleShareKakao = async () => {
-    if (percentileTop == null) return;
-    setShareError(null);
+  const handleCopyLink = async () => {
     try {
-      await shareToKakao(shareData);
+      await copyShareLink(shareData);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
     } catch {
-      setShareError('카카오톡 공유를 사용하려면 VITE_KAKAO_JS_KEY를 설정해주세요.');
-    }
-  };
-
-  const handleShareX = () => {
-    if (percentileTop == null) return;
-    setShareError(null);
-    shareToX(shareData);
-  };
-
-  const handleShareInstagram = async () => {
-    if (percentileTop == null) return;
-    setShareError(null);
-    try {
-      await shareToInstagram(shareData, shareCardRef.current);
-    } catch {
-      setShareError('공유 중 오류가 발생했어요.');
+      setLinkCopied(false);
     }
   };
 
@@ -162,26 +146,24 @@ export default function RecordAndRank() {
                   {(bestScore ?? 0).toLocaleString()}점 {meData?.best_level != null && `· ${meData.best_level}단계`}
                 </p>
                 {streakCount > 0 && <p className="text-white/90 text-sm mt-0.5">🔥 {streakCount}일 연속</p>}
-                {/* Share */}
-                <div className="flex justify-center gap-6 mt-6">
-                  <button type="button" onClick={handleShareKakao} className="flex flex-col items-center gap-1 opacity-90 hover:opacity-100">
-                    <span className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center text-lg font-bold text-[#191919] shadow">K</span>
-                    <span className="text-xs font-medium text-white">카카오</span>
-                  </button>
-                  <button type="button" onClick={handleShareX} className="flex flex-col items-center gap-1 opacity-90 hover:opacity-100">
-                    <span className="w-12 h-12 rounded-full bg-black/80 flex items-center justify-center text-white shadow">
-                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                    </span>
-                    <span className="text-xs font-medium text-white">X</span>
-                  </button>
-                  <button type="button" onClick={handleShareInstagram} className="flex flex-col items-center gap-1 opacity-90 hover:opacity-100">
-                    <span className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow">
-                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07z" /></svg>
-                    </span>
-                    <span className="text-xs font-medium text-white">인스타</span>
-                  </button>
-                </div>
-                {shareError && <p className="text-red-200 text-xs mt-2">{shareError}</p>}
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="mt-6 px-6 py-3 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold text-sm transition flex items-center gap-2 mx-auto"
+                >
+                  {linkCopied ? (
+                    <>
+                      <span>✓</span> 복사됨!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      링크 복사
+                    </>
+                  )}
+                </button>
               </motion.div>
             ) : (
               <motion.div

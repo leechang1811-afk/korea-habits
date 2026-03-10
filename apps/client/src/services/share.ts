@@ -95,21 +95,12 @@ export function shareToX(data: ShareResultData): void {
   window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank', 'noopener,noreferrer,width=550,height=420');
 }
 
-/** 상위 N% 자랑용 공유 (기록&순위 페이지에서 사용) */
-export function sharePercentileToKakao(percentileTop: number): Promise<void> {
-  return shareToKakao({ percentileTop, runScore: 0, maxLevel: 0 });
-}
-
-export function sharePercentileToX(percentileTop: number): void {
-  const text = getShareTextPercentile(percentileTop);
-  const url = getShareUrl(percentileTop);
-  const params = new URLSearchParams({ text, url });
-  window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank', 'noopener,noreferrer,width=550,height=420');
-}
-
-export async function sharePercentileClipboard(percentileTop: number): Promise<void> {
-  const text = getShareTextPercentile(percentileTop);
-  const url = getShareUrl(percentileTop);
+/** 링크 복사 (결과/기록 페이지 공통) - 카카오/X/인스타 대신 링크만 복사 */
+export async function copyShareLink(data: ShareResultData): Promise<void> {
+  const text = data.isChampion
+    ? `한국인 상위 0.1%! 🎉 20단계 모두 달성했어요. 총점 ${data.runScore.toLocaleString()}점`
+    : `한국인 상위 ${data.percentileTop}%! 총점 ${data.runScore.toLocaleString()}점, ${data.maxLevel}단계 도전`;
+  const url = getShareUrl(data.percentileTop);
   await navigator.clipboard.writeText(`${text}\n${url}`);
 }
 

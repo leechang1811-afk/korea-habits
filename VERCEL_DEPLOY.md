@@ -44,8 +44,7 @@
 
 | 변수 | 값 | 설명 |
 |------|-----|------|
-| `VITE_API_URL` | `https://your-backend-url.com` | **필수** - 백엔드 API 주소 (끝에 `/api` 제외) |
-| `VITE_KAKAO_JS_KEY` | 카카오 JS 키 | 선택 - 카카오톡 공유 기능용 |
+| `VITE_API_URL` | `https://your-backend-url.com/api` | **필수** - 백엔드 API 베이스 URL |
 
 - `VITE_API_URL` 예시: `https://korea-quiz-api-production.up.railway.app/api`
 - 이 값이 API 베이스이므로, `/runs/submit` 등이 자동으로 붙어 호출됩니다.

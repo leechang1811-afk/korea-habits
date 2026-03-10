@@ -8,7 +8,7 @@ export const scoreHistogramDaily = pgTable(
     bucket: integer('bucket').notNull(),
     count: bigint('count', { mode: 'number' }).notNull().default(0),
   },
-  (t) => [primaryKey({ columns: [t.date, t.bucket] })]
+  (t) => ({ pk: primaryKey({ columns: [t.date, t.bucket] }) })
 );
 
 // challenge_stats_daily: success rate per game_type, level
@@ -21,7 +21,7 @@ export const challengeStatsDaily = pgTable(
     attempts: bigint('attempts', { mode: 'number' }).notNull().default(0),
     successes: bigint('successes', { mode: 'number' }).notNull().default(0),
   },
-  (t) => [primaryKey({ columns: [t.date, t.game_type, t.level] })]
+  (t) => ({ pk: primaryKey({ columns: [t.date, t.game_type, t.level] }) })
 );
 
 // runs: 개인 플레이 기록 (평균/최저/최신 산출용)
@@ -45,5 +45,5 @@ export const leaderboard = pgTable(
     max_level: integer('max_level').notNull(),
     created_at: date('created_at').notNull(),
   },
-  (t) => [unique().on(t.user_hash, t.scope, t.year_month)]
+  (t) => ({ uq: unique().on(t.user_hash, t.scope, t.year_month) })
 );

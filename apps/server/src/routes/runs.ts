@@ -142,6 +142,7 @@ router.post('/api/runs/submit', async (req, res) => {
       TAP10: game_breakdown?.TAP10 ?? 0,
       MEMORY: game_breakdown?.MEMORY ?? 0,
       CALCULATION: game_breakdown?.CALCULATION ?? 0,
+      PAINT: game_breakdown?.PAINT ?? 0,
     };
     const { strength, weakness } = getStrengthWeakness(breakdown);
     const nextGoalHint =
@@ -173,7 +174,7 @@ router.post('/api/runs/submit', async (req, res) => {
         year_month: ym,
         score: run_score,
         max_level,
-        created_at: new Date(dateStr + 'T12:00:00Z'),
+        created_at: dateStr.slice(0, 10),
       })
       .onConflictDoUpdate({
         target: [leaderboard.user_hash, leaderboard.scope, leaderboard.year_month],
