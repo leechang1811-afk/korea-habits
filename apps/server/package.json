@@ -9,7 +9,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:check": "tsx src/db/check.ts"
+    "db:check": "tsx src/db/check.ts",
+    "db:setup": "node scripts/setup-db.mjs",
+    "db:connect": "open 'https://supabase.com/dashboard/project/svnhwtiwvzwbwdbmkecw?showConnect=true'"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -9,6 +9,8 @@ export interface RunSubmitResponse {
   nextGoalHint: string;
   monthlyTop?: number | null;
   me?: { user_hash: string; best_score: number; best_level: number } | null;
+  koreanAvgScore?: number | null;
+  perTypeKoreanSuccess?: Record<string, number> | null;
 }
 
 export async function submitRun(payload: {
@@ -25,5 +27,16 @@ export async function submitRun(payload: {
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Failed to submit run');
+  return res.json();
+}
+
+export async function getPercentilePreview(
+  currentScore: number,
+  nextScore: number
+): Promise<{ currentPercentile: number; nextPercentile: number | null }> {
+  const res = await fetch(
+    `${API_BASE}/stats/percentile-preview?current_score=${currentScore}&next_score=${nextScore}`
+  );
+  if (!res.ok) return { currentPercentile: 50, nextPercentile: 45 };
   return res.json();
 }

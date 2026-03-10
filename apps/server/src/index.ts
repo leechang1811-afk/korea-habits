@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './loadEnv.js';
 import express from 'express';
 import cors from 'cors';
 import { db } from './db/client.js';
@@ -9,7 +9,7 @@ import leaderboardRouter from './routes/leaderboard.js';
 import meRouter from './routes/me.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5005;
 
 app.use(cors({ origin: true }));
 app.use(express.json());

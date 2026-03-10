@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { sql, eq, and, gte } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { challengeStatsDaily, scoreHistogramDaily } from '../db/schema.js';
+import { challengeStatsDaily } from '../db/schema.js';
+import { getPercentileFromRuns } from '../db/percentile.js';
 
 const router = Router();
 
@@ -47,7 +48,7 @@ router.get('/api/stats/success', async (req, res) => {
     });
   } catch (e) {
     console.error('GET /api/stats/success', e);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.json({ attempts: 0, successes: 0, successRatePct: null });
   }
 });
 
@@ -57,38 +58,33 @@ router.get('/api/stats/percentile', async (req, res) => {
     if (isNaN(score)) {
       return res.status(400).json({ error: 'score required' });
     }
-
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const startDate = thirtyDaysAgo.toISOString().slice(0, 10);
-
-    const rows = await db
-      .select()
-      .from(scoreHistogramDaily)
-      .where(gte(scoreHistogramDaily.date, startDate));
-
-    let totalCount = 0;
-    const buckets: { bucket: number; count: number }[] = [];
-    for (const r of rows) {
-      totalCount += Number(r.count);
-      const existing = buckets.find((b) => b.bucket === r.bucket);
-      if (existing) existing.count += Number(r.count);
-      else buckets.push({ bucket: r.bucket, count: Number(r.count) });
-    }
-    buckets.sort((a, b) => a.bucket - b.bucket);
-
-    const b = Math.floor(score / 200);
-    let belowCount = 0;
-    for (const { bucket: bk, count } of buckets) {
-      if (bk < b) belowCount += count;
-    }
-    const percentileTop =
-      totalCount > 0 ? Math.round((belowCount / totalCount) * 100) : 100;
-
-    return res.json({ percentileTop: Math.min(100, Math.max(1, percentileTop)) });
+    const percentileTop = await getPercentileFromRuns(score);
+    return res.json({ percentileTop });
   } catch (e) {
     console.error('GET /api/stats/percentile', e);
     return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/api/stats/percentile-preview', async (req, res) => {
+  try {
+    const currentScore = parseInt(req.query.current_score as string, 10);
+    const nextScore = parseInt(req.query.next_score as string, 10);
+    if (isNaN(currentScore)) {
+      return res.status(400).json({ error: 'current_score required' });
+    }
+    const [currentPercentile, nextPercentile] = await Promise.all([
+      getPercentileFromRuns(currentScore),
+      isNaN(nextScore) ? getPercentileFromRuns(currentScore + 100) : getPercentileFromRuns(nextScore),
+    ]);
+    // nextPercentile: 다음 단계 통과 시 더 좋아지므로 숫자 감소 (상위 50% → 45% 등)
+    return res.json({
+      currentPercentile,
+      nextPercentile: nextPercentile ?? Math.max(1, (currentPercentile ?? 50) - 5),
+    });
+  } catch (e) {
+    console.error('GET /api/stats/percentile-preview', e);
+    return res.json({ currentPercentile: 50, nextPercentile: 45 });
   }
 });
 

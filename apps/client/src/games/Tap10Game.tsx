@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  timeLimitForLevel,
+  tap10TimeLimitForLevel,
   timingSpeedMultiplierForLevel,
   timingSuccessToleranceForLevel,
   normalizeStageScore,
@@ -13,16 +13,17 @@ interface Tap10GameProps {
   onFail: () => void;
 }
 
-/** targetSec은 0~timeLimitSec 안에서. timeLimit 짧으면 구간 완화 */
+/** targetSec은 0~min(10, timeLimitSec) 안에서. 탭 목표 시간 최대 10초 */
 function pickTargetSec(timeLimitSec: number): number {
-  const margin = timeLimitSec >= 6 ? 2 : 0;
+  const maxTarget = Math.min(10, timeLimitSec);
+  const margin = maxTarget >= 6 ? 2 : 0;
   const min = margin;
-  const max = Math.max(min, timeLimitSec - margin);
+  const max = Math.max(min, maxTarget - margin);
   return min + Math.floor(Math.random() * (max - min + 1));
 }
 
 export default function Tap10Game({ level, onSuccess, onFail }: Tap10GameProps) {
-  const timeLimitSec = timeLimitForLevel(level);
+  const timeLimitSec = tap10TimeLimitForLevel(level);
   const speedMultiplier = timingSpeedMultiplierForLevel(level);
   const successTolerance = timingSuccessToleranceForLevel(level);
   const targetSec = useMemo(() => pickTargetSec(timeLimitSec), [timeLimitSec]);

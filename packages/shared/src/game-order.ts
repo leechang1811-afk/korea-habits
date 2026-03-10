@@ -6,14 +6,14 @@ const STAGE_9_TO_14_INDICES = [8, 9, 10, 11, 12, 13];
 
 /**
  * 20단계 문제유형 순서 생성:
- * - 4유형 각 25% 비중 (REACTION, TAP10, MEMORY, CALCULATION 각 5회)
+ * - 5유형 각 20% 비중 (REACTION, TAP10, MEMORY, CALCULATION, PAINT 각 4회)
  * - 같은 유형 연속 2회 이하
  * - 9~14단계에 MEMORY(도형 파란색) 최소 1회 보장
  * - 랜덤 출제
  */
 export function generateGameOrder(): GameType[] {
   const order: GameType[] = [];
-  const counts = [5, 5, 5, 5];
+  const counts = [4, 4, 4, 4, 4];
   const shuffledCounts = [...counts].sort(() => Math.random() - 0.5);
   const remaining = new Map<GameType, number>();
   GAME_TYPES.forEach((t, i) => {

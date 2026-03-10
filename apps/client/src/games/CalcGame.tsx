@@ -100,7 +100,7 @@ export default function CalcGame({ level, onSuccess, onFail }: CalcGameProps) {
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (oxCorrect) onSuccess(100);
+                  if (oxCorrect) onSuccess(normalizeStageScore(100, 100, true));
                   else onFail();
                 }}
                 className="px-8 py-4 rounded-2xl border-2 border-toss-border hover:border-toss-blue transition"
@@ -111,7 +111,7 @@ export default function CalcGame({ level, onSuccess, onFail }: CalcGameProps) {
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (!oxCorrect) onSuccess(100);
+                  if (!oxCorrect) onSuccess(normalizeStageScore(100, 100, true));
                   else onFail();
                 }}
                 className="px-8 py-4 rounded-2xl border-2 border-toss-border hover:border-toss-blue transition"

@@ -7,9 +7,9 @@ export default defineConfig({
     exclude: ['shared'],
   },
   server: {
-    port: 5002,
+    port: 5173,
     proxy: {
-      '/api': { target: 'http://localhost:3001', changeOrigin: true },
+      '/api': { target: 'http://localhost:5005', changeOrigin: true },
     },
   },
 });

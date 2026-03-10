@@ -1,4 +1,4 @@
-export const GAME_TYPES = ['REACTION', 'TAP10', 'MEMORY', 'CALCULATION'] as const;
+export const GAME_TYPES = ['REACTION', 'TAP10', 'MEMORY', 'CALCULATION', 'PAINT'] as const;
 export type GameType = (typeof GAME_TYPES)[number];
 
 export const GAME_TYPE_LABELS: Record<GameType, string> = {
@@ -6,6 +6,7 @@ export const GAME_TYPE_LABELS: Record<GameType, string> = {
   TAP10: '타이밍',
   MEMORY: '기억력',
   CALCULATION: '계산 속도',
+  PAINT: '물감 색깔 (색 혼합 추론)',
 };
 
 // Reaction game colors
@@ -25,6 +26,7 @@ export interface GameBreakdown {
   TAP10?: number;
   MEMORY?: number;
   CALCULATION?: number;
+  PAINT?: number;
 }
 
 export interface RunSubmitPayload {
@@ -43,4 +45,6 @@ export interface RunSubmitResponse {
   nextGoalHint: string;
   monthlyTop?: number | null;
   me?: { user_hash: string; best_score: number; best_level: number } | null;
+  koreanAvgScore?: number | null;
+  perTypeKoreanSuccess?: Partial<Record<GameType, number>> | null;
 }

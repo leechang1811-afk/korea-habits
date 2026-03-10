@@ -35,7 +35,8 @@ router.get('/api/leaderboard', async (req, res) => {
     });
   } catch (e) {
     console.error('GET /api/leaderboard', e);
-    return res.status(500).json({ error: 'Internal server error' });
+    const scope = (req.query.scope as string) || 'monthly';
+    return res.json({ scope, year_month: new Date().toISOString().slice(0, 7), entries: [] });
   }
 });
 

@@ -35,6 +35,7 @@ const GAME_LABELS: Record<GameType, string> = {
   TAP10: '10초 터치',
   MEMORY: '기억력',
   CALCULATION: '계산 속도',
+  PAINT: '물감 색깔 (색 혼합 추론)',
 };
 
 /** 약점별 개선 팁 */
@@ -43,6 +44,7 @@ const WEAKNESS_TIPS: Record<GameType, string> = {
   TAP10: '숫자가 목표에 가까워질 때 타이밍을 미리 예측해 보세요.',
   MEMORY: '도형·숫자를 구역별로 나눠 기억해 보세요.',
   CALCULATION: '덧셈·뺄셈을 반복 연습하면 속도가 빨라집니다.',
+  PAINT: 'R+G=노랑, R+B=보라, G+B=청록. 빨강·초록·파랑을 합쳐 목표색을 만드세요.',
 };
 
 export function getStrengthWeakness(breakdown: Record<GameType, number>): {

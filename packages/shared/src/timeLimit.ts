@@ -50,6 +50,26 @@ export function reactionTimeLimitForLevel(level: number): number {
 }
 
 /**
+ * 10초 터치(시간 맞추기) 게임 제한시간: 최대 10초, 20단계 3초
+ */
+export function tap10TimeLimitForLevel(level: number): number {
+  if (level <= 1) return 10;
+  if (level >= 20) return 3;
+  const t = (level - 1) / 19;
+  return Math.round(10 - t * 7);
+}
+
+/**
+ * 물감 색깔 맞추기 게임 제한시간(초)
+ */
+export function paintTimeLimitForLevel(level: number): number {
+  if (level <= 1) return 30;
+  if (level >= 20) return 8;
+  const t = (level - 1) / 19;
+  return Math.round(30 - t * 22);
+}
+
+/**
  * 반응속도 게임 색상 전환 주기(ms):
  * - 9~14: 약 25% 성공 (380ms→180ms)
  * - 16~19: 더 어려움 (150ms→70ms)

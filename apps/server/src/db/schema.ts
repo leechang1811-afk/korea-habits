@@ -24,6 +24,15 @@ export const challengeStatsDaily = pgTable(
   (t) => [primaryKey({ columns: [t.date, t.game_type, t.level] })]
 );
 
+// runs: 개인 플레이 기록 (평균/최저/최신 산출용)
+export const runs = pgTable('runs', {
+  id: serial('id').primaryKey(),
+  user_hash: varchar('user_hash', { length: 64 }).notNull(),
+  score: integer('score').notNull(),
+  max_level: integer('max_level').notNull(),
+  created_at: varchar('created_at', { length: 30 }).notNull(),
+});
+
 // leaderboard: monthly top 100
 export const leaderboard = pgTable(
   'leaderboard',
@@ -34,7 +43,7 @@ export const leaderboard = pgTable(
     year_month: varchar('year_month', { length: 7 }).notNull(),
     score: integer('score').notNull(),
     max_level: integer('max_level').notNull(),
-    created_at: date('date').notNull(),
+    created_at: date('created_at').notNull(),
   },
   (t) => [unique().on(t.user_hash, t.scope, t.year_month)]
 );

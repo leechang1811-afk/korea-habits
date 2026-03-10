@@ -19,7 +19,8 @@ export function formatScore(score: number): string {
 
 /**
  * Format percentile for display
+ * p = "상위 X%"의 X (1=최고, 99=최하)
  */
 export function formatPercentile(p: number): string {
-  return `상위 ${(100 - p).toFixed(1)}%`;
+  return `상위 ${Math.round(p)}%`;
 }

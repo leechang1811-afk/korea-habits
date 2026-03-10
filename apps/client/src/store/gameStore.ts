@@ -12,6 +12,7 @@ export interface RunState {
   usedRevive: boolean;
   isRevivedLevel: boolean;
   failed: boolean;
+  comboCount: number;
 }
 
 export interface CompletedRunData {
@@ -33,6 +34,7 @@ interface GameStore {
   confirmGameOver: () => void;
   getCurrentGameType: () => GameType | null;
   getCumulativeScore: () => number;
+  getComboCount: () => number;
   endRun: () => void;
   setUserHash: (hash: string) => void;
 }
@@ -76,6 +78,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         usedRevive: false,
         isRevivedLevel: false,
         failed: false,
+        comboCount: 0,
       },
     });
   },
@@ -89,6 +92,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const count = run.perStageResults.filter((r) => r.game_type === k).length + 1;
     breakdown[k] = (prev * (count - 1) + result.score) / count;
     const newCumulative = run.cumulativeScore + result.score;
+    const newCombo = result.success ? (run.comboCount ?? 0) + 1 : 0;
     set({
       run: {
         ...run,
@@ -98,6 +102,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         perStageResults: [...run.perStageResults, result],
         gameBreakdown: breakdown,
         isRevivedLevel: false,
+        comboCount: newCombo,
       },
     });
   },
@@ -108,7 +113,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { run } = get();
     if (!run) return;
     if (!run.usedRevive) {
-      set({ run: { ...run, failed: true } });
+      set({ run: { ...run, failed: true, comboCount: 0 } });
     } else {
       get().confirmGameOver();
     }
@@ -154,5 +159,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   getCumulativeScore: () => get().run?.cumulativeScore ?? 0,
 
-  endRun: () => set({ run: null }),
+  getComboCount: () => get().run?.comboCount ?? 0,
+
+  endRun: () => set({ run: null, lastCompletedRun: null }),
 }));

@@ -9,14 +9,14 @@ export interface MemoryParams {
 }
 
 export const MEMORY_PARAMS: Record<number, MemoryParams> = {
-  1: { digitCount: 3, exposeMs: 5000, usePattern: false },
-  2: { digitCount: 3, exposeMs: 4500, usePattern: false },
-  3: { digitCount: 4, exposeMs: 4200, usePattern: false },
-  4: { digitCount: 4, exposeMs: 3900, usePattern: false },
-  5: { digitCount: 5, exposeMs: 3600, usePattern: false },
-  6: { digitCount: 5, exposeMs: 3400, usePattern: false },
-  7: { digitCount: 6, exposeMs: 3200, usePattern: false },
-  8: { digitCount: 6, exposeMs: 3000, usePattern: false },
+  1: { digitCount: 5, exposeMs: 5000, usePattern: false },
+  2: { digitCount: 5, exposeMs: 4500, usePattern: false },
+  3: { digitCount: 6, exposeMs: 4200, usePattern: false },
+  4: { digitCount: 6, exposeMs: 3900, usePattern: false },
+  5: { digitCount: 7, exposeMs: 3600, usePattern: false },
+  6: { digitCount: 7, exposeMs: 3400, usePattern: false },
+  7: { digitCount: 8, exposeMs: 3200, usePattern: false },
+  8: { digitCount: 8, exposeMs: 3000, usePattern: false },
   9: { digitCount: 7, exposeMs: 1100, usePattern: true, patternSize: 3 },
   10: { digitCount: 8, exposeMs: 900, usePattern: true, patternSize: 3 },
   11: { digitCount: 8, exposeMs: 700, usePattern: true, patternSize: 3 },
@@ -100,4 +100,41 @@ export function getCalcParams(level: number): CalcParams {
 
 export function getTap10Params(level: number): Tap10Params {
   return TAP10_PARAMS[Math.min(20, Math.max(1, level))] ?? TAP10_PARAMS[1];
+}
+
+// 물감 색깔: 레벨↑ = 혼합 색 많아짐(2~5), 드롭 빠름, 떨어지는 색 다양해짐
+export type PaintBaseColor = 'R' | 'G' | 'B' | 'Y' | 'M' | 'C' | 'O' | 'L' | 'P' | 'T';
+
+export interface PaintParams {
+  baseColors: PaintBaseColor[];
+  dropIntervalMs: number;
+  fallDurationSec: number;
+  mixCount: 2 | 3 | 4 | 5;
+}
+
+export const PAINT_PARAMS: Record<number, PaintParams> = {
+  1: { baseColors: ['R', 'G', 'B'], dropIntervalMs: 1400, fallDurationSec: 2.2, mixCount: 2 },
+  2: { baseColors: ['R', 'G', 'B'], dropIntervalMs: 1200, fallDurationSec: 2, mixCount: 2 },
+  3: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C'], dropIntervalMs: 1000, fallDurationSec: 1.8, mixCount: 2 },
+  4: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C'], dropIntervalMs: 900, fallDurationSec: 1.6, mixCount: 3 },
+  5: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C'], dropIntervalMs: 800, fallDurationSec: 1.5, mixCount: 3 },
+  6: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C'], dropIntervalMs: 700, fallDurationSec: 1.4, mixCount: 3 },
+  7: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C'], dropIntervalMs: 600, fallDurationSec: 1.3, mixCount: 3 },
+  8: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L'], dropIntervalMs: 550, fallDurationSec: 1.2, mixCount: 3 },
+  9: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P'], dropIntervalMs: 500, fallDurationSec: 1.1, mixCount: 4 },
+  10: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 450, fallDurationSec: 1, mixCount: 4 },
+  11: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 400, fallDurationSec: 0.95, mixCount: 4 },
+  12: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 360, fallDurationSec: 0.9, mixCount: 4 },
+  13: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 320, fallDurationSec: 0.85, mixCount: 4 },
+  14: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 280, fallDurationSec: 0.8, mixCount: 4 },
+  15: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 250, fallDurationSec: 0.75, mixCount: 5 },
+  16: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 220, fallDurationSec: 0.7, mixCount: 5 },
+  17: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 190, fallDurationSec: 0.65, mixCount: 5 },
+  18: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 160, fallDurationSec: 0.6, mixCount: 5 },
+  19: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 140, fallDurationSec: 0.55, mixCount: 5 },
+  20: { baseColors: ['R', 'G', 'B', 'Y', 'M', 'C', 'O', 'L', 'P', 'T'], dropIntervalMs: 120, fallDurationSec: 0.5, mixCount: 5 },
+};
+
+export function getPaintParams(level: number): PaintParams {
+  return PAINT_PARAMS[Math.min(20, Math.max(1, level))] ?? PAINT_PARAMS[1];
 }

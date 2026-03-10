@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   REACTION_COLORS,
-  timeLimitForLevel,
+  reactionTimeLimitForLevel,
   colorIntervalForLevel,
   type ReactionColor,
 } from 'shared';
@@ -32,7 +32,7 @@ export default function ReactionGame({ level, onSuccess, onFail }: ReactionGameP
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasFailedRef = useRef(false);
 
-  const timeLimit = timeLimitForLevel(level);
+  const timeLimit = reactionTimeLimitForLevel(level);
   const colorInterval = colorIntervalForLevel(level);
 
   const startGame = useCallback(() => {
@@ -43,6 +43,10 @@ export default function ReactionGame({ level, onSuccess, onFail }: ReactionGameP
     setCurrentColorIndex(0);
     setPhase('instruction');
   }, []);
+
+  useLayoutEffect(() => {
+    startGame();
+  }, [startGame]);
 
   useEffect(() => {
     if (phase !== 'instruction') return;
@@ -104,24 +108,6 @@ export default function ReactionGame({ level, onSuccess, onFail }: ReactionGameP
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
       <AnimatePresence mode="wait">
-        {phase === 'idle' && (
-          <motion.div
-            key="idle"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-center"
-          >
-            <p className="text-toss-sub mb-6">준비되면 시작 버튼을 누르세요</p>
-            <button
-              type="button"
-              onClick={startGame}
-              className="px-8 py-4 rounded-2xl bg-toss-blue text-white font-semibold shadow-sm hover:opacity-90 transition"
-            >
-              시작
-            </button>
-          </motion.div>
-        )}
         {(phase === 'instruction' || phase === 'playing') && targetColor && (
           <motion.div
             key="play"

@@ -1,11 +1,10 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Home from './pages/Home';
 import Run from './pages/Run';
 import Result from './pages/Result';
 import ResultGate from './pages/ResultGate';
-import Leaderboard from './pages/Leaderboard';
-import MyStats from './pages/MyStats';
+import RecordAndRank from './pages/RecordAndRank';
 
 export default function App() {
   return (
@@ -15,8 +14,9 @@ export default function App() {
         <Route path="/run" element={<Run />} />
         <Route path="/result-gate" element={<ResultGate />} />
         <Route path="/result" element={<Result />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/my-stats" element={<MyStats />} />
+        <Route path="/record" element={<RecordAndRank />} />
+        <Route path="/leaderboard" element={<Navigate to="/record" replace />} />
+        <Route path="/my-stats" element={<Navigate to="/record" replace />} />
       </Routes>
     </AnimatePresence>
   );
