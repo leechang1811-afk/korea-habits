@@ -1,0 +1,13 @@
+# Render 배포 설정 (무료 플랜은 대시보드에서 Instance Type → Free 선택)
+# https://render.com
+services:
+  - type: web
+    name: korea-quiz-api
+    runtime: node
+    buildCommand: npm install && npm run build:server
+    startCommand: node apps/server/dist/index.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: production

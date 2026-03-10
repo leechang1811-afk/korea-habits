@@ -2,19 +2,18 @@
 
 ## 1. 사전 준비: 백엔드 배포
 
-클라이언트가 API를 호출하므로 **서버를 먼저** Railway, Render 등에 배포하세요.
+클라이언트가 API를 호출하므로 **서버를 먼저** Render(무료) 등에 배포하세요.
 
-### Railway 예시
+### Render 무료 플랜 예시
 
-1. [Railway](https://railway.app) → New Project → Deploy from GitHub
-2. **korea-quiz** 저장소 선택
-3. **Root Directory**: `apps/server` 설정
-4. **Build Command**: `npm install && npx tsc`
-5. **Start Command**: `node dist/index.js`
-6. **환경변수**: `DATABASE_URL`, `PORT=5005`
-7. 배포 후 URL 확인 (예: `https://korea-quiz-api-production.up.railway.app`)
+1. [Render](https://render.com) → New Web Service → korea-quiz 연결
+2. **Build Command**: `npm install && npm run build:server`
+3. **Start Command**: `node apps/server/dist/index.js`
+4. **Instance Type**: Free
+5. **환경변수**: `DATABASE_URL` (Supabase URI)
+6. 배포 후 URL 확인 (예: `https://korea-quiz-api.onrender.com`)
 
-> 서버 경로가 `/api/runs/submit` 등이므로, `VITE_API_URL`은 `https://your-server.railway.app/api` 형식으로 끝까지 포함해서 설정하세요.
+> `VITE_API_URL`은 `https://your-server.onrender.com/api` 형식으로 끝까지 포함해서 설정하세요.
 
 ---
 
@@ -46,7 +45,7 @@
 |------|-----|------|
 | `VITE_API_URL` | `https://your-backend-url.com/api` | **필수** - 백엔드 API 베이스 URL |
 
-- `VITE_API_URL` 예시: `https://korea-quiz-api-production.up.railway.app/api`
+- `VITE_API_URL` 예시: `https://korea-quiz-api.onrender.com/api`
 - 이 값이 API 베이스이므로, `/runs/submit` 등이 자동으로 붙어 호출됩니다.
 
 ### 2-4. 배포

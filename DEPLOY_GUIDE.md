@@ -30,33 +30,44 @@
 
 ---
 
-## 2️⃣ Railway (백엔드 API 서버)
+## 2️⃣ Render (백엔드 API 서버) — 무료
 
 ### 2-1. 배포
 
-1. [Railway](https://railway.app) 접속 → **Login with GitHub**
-2. **New Project** → **Deploy from GitHub repo**
-3. **korea-quiz** 저장소 선택
-4. 배포가 시작되면 **Settings** (또는 톱니바퀴) 클릭
+1. [Render](https://render.com) 접속 → **Get Started** → **GitHub** 로그인
+2. **New +** → **Web Service**
+3. **Connect a repository** → **korea-quiz** 저장소 선택
+4. 아래 설정 입력:
+
+| 항목 | 값 |
+|------|-----|
+| **Name** | `korea-quiz-api` (아무거나 OK) |
+| **Region** | Singapore (한국과 가까움) |
+| **Branch** | `main` |
+| **Runtime** | Node |
+| **Build Command** | `npm install && npm run build:server` |
+| **Start Command** | `node apps/server/dist/index.js` |
+| **Instance Type** | **Free** 선택 |
+
+5. **Advanced** → **Environment Variables** 클릭
 
 ### 2-2. 환경변수 설정
 
-1. **Variables** 탭 클릭
-2. **+ New Variable** 또는 **Raw Editor** 선택
-3. 아래 변수 입력:
+**Add Environment Variable** 클릭 후:
 
-| 이름 | 값 |
-|------|-----|
+| Key | Value |
+|-----|-------|
 | `DATABASE_URL` | (1단계에서 복사한 Supabase URI) |
-| `PORT` | `5005` |
 
-4. 저장
+> Render가 자동으로 `PORT`를 넣어주므로 따로 설정하지 않아도 됩니다.
 
-### 2-3. 도메인 확인
+### 2-3. 배포 & 도메인 확인
 
-1. **Settings** → **Networking** → **Generate Domain** 클릭
-2. 생성된 URL 복사 (예: `https://korea-quiz-production.up.railway.app`)
-3. **끝에 `/api` 붙인 주소**를 메모 (예: `https://korea-quiz-production.up.railway.app/api`)
+1. **Create Web Service** 클릭
+2. 빌드가 끝나면 상단에 **URL** 표시 (예: `https://korea-quiz-api.onrender.com`)
+3. **끝에 `/api` 붙인 주소**를 메모 (예: `https://korea-quiz-api.onrender.com/api`)
+
+> ⚠️ **무료 플랜**: 15분 동안 요청이 없으면 슬립 모드로 들어갑니다. 첫 요청 시 1분 정도 깨어나는데, 잠시 기다리면 됩니다.
 
 ---
 
@@ -96,6 +107,7 @@
 
 | 현상 | 확인 사항 |
 |------|-----------|
-| "연결을 확인하고 다시 시도" | Vercel `VITE_API_URL`이 Railway 주소인지, `/api`까지 포함됐는지 확인 |
-| Railway 빌드 실패 | GitHub에 최신 코드가 푸시된 상태인지 확인 |
+| "연결을 확인하고 다시 시도" | Vercel `VITE_API_URL`이 Render 주소인지, `/api`까지 포함됐는지 확인 |
+| Render 빌드 실패 | GitHub에 최신 코드가 푸시된 상태인지 확인 |
+| 첫 요청 느림 (1분 정도) | 무료 플랜 슬립 모드. 15분 미사용 시 잠들고, 요청 시 깨어남 |
 | DB 오류 | Supabase SQL Editor에서 테이블이 생성됐는지 확인 |
