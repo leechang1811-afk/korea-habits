@@ -10,7 +10,7 @@ export interface ShareResultData {
 }
 
 const APP_URL = typeof window !== 'undefined' ? window.location.origin : '';
-const APP_TITLE = '두뇌 순위 확인';
+const APP_TITLE = '내 두뇌 몇 등?';
 
 function getShareText(data: ShareResultData): string {
   if (data.isChampion) {

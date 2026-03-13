@@ -40,13 +40,13 @@ export default function Home() {
         className="text-center max-w-md w-full"
       >
         <h1 className="text-2xl md:text-3xl font-bold text-toss-text mb-3 leading-tight">
-          두뇌 순위 확인
+          내 두뇌 몇 등?
         </h1>
         <p className="text-toss-text text-base mb-2 font-medium">
-          두뇌 게임 5가지로 실력을 테스트해보세요
+          대한민국에서 내 두뇌 순위 확인
         </p>
         <p className="text-toss-sub text-sm mb-6 leading-relaxed">
-          민첩성, 순발력, 집중력 등 5분이면 결과 확인 · 한국인 평균과 비교해 드려요
+          5가지 게임으로 5분 만에 결과 확인 · 한국인 평균과 비교해 드려요
         </p>
 
         {/* Streak badge - Investment 표시 */}
