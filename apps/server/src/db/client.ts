@@ -14,6 +14,8 @@ const connStr = connectionString.includes('sslmode=') ? connectionString : conne
 const pool = new pg.Pool({
   connectionString: connStr,
   connectionTimeoutMillis: 8000,
+  // Render 등에서 Supabase 연결 시 "self-signed certificate in certificate chain" 방지
+  ssl: { rejectUnauthorized: false },
 });
 export const db = drizzle(pool, { schema });
 export type Db = typeof db;
