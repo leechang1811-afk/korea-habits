@@ -56,6 +56,7 @@
 | `DATABASE_URL is required` | Render에 DATABASE_URL 미설정 | 2-1 참고 |
 | `Connection refused` | 잘못된 호스트/포트, Supabase Paused | 1-1, 1-2 확인 |
 | `Password authentication failed` | 비밀번호 오류, 특수문자 미인코딩 | 1-2 비밀번호 확인 |
+| `ENETUNREACH` (IPv6 주소) | Render가 Supabase IPv6로 연결 시도 후 실패 | Pooler(6543) 사용, 코드에 IPv4 우선 적용 완료 |
 | `timeout` | 네트워크/방화벽 | Supabase Session 모드(5432) 시도 |
 
 ---
