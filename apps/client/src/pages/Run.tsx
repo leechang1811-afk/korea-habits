@@ -171,7 +171,7 @@ export default function Run() {
   if (!run) {
     if (lastCompletedRun) return null;
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+      <div className="min-h-[100dvh] min-h-screen bg-white flex flex-col items-center justify-center gap-4 p-4">
         <div className="w-10 h-10 border-2 border-toss-blue border-t-transparent rounded-full animate-spin" />
         <p className="text-toss-sub">게임을 준비하고 있어요</p>
       </div>
@@ -181,7 +181,7 @@ export default function Run() {
   const gameProps = { level, onSuccess: handleSuccess, onFail: handleFail };
 
   return (
-    <div className="min-h-screen bg-white relative">
+    <div className="min-h-[100dvh] min-h-screen bg-white relative">
       {showOnboarding && (
         <motion.div
           initial={{ opacity: 0 }}

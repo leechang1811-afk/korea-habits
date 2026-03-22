@@ -160,7 +160,7 @@ export default function Result() {
       animate={{ opacity: 1 }}
       className="min-h-screen bg-gradient-to-b from-slate-50 to-white pb-24"
     >
-      <div className="max-w-md mx-auto px-4 pt-6">
+      <div className="max-w-md mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
         {loading ? (
           <div className="py-20 text-center">
             <p className="text-toss-sub text-lg">결과 분석 중...</p>
@@ -181,7 +181,7 @@ export default function Result() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', damping: 20 }}
-              className={`rounded-3xl p-8 text-center shadow-xl ${
+              className={`rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-center shadow-xl ${
                 lastCompletedRun.maxLevel === 20
                   ? 'bg-gradient-to-br from-amber-400 via-yellow-300 to-amber-200 ring-4 ring-amber-300/60 shadow-amber-200/50'
                   : 'bg-gradient-to-br from-toss-blue to-blue-600'
@@ -201,7 +201,7 @@ export default function Result() {
                   <p className="text-base font-bold text-amber-700 mb-3">정말 잘했어요! 🎉 축하해요!</p>
                 </>
               )}
-              <p className={`text-5xl md:text-6xl font-black ${lastCompletedRun.maxLevel === 20 ? 'text-amber-900' : 'text-white'}`}>
+              <p className={`text-4xl sm:text-5xl md:text-6xl font-black ${lastCompletedRun.maxLevel === 20 ? 'text-amber-900' : 'text-white'}`}>
                 상위 {lastCompletedRun.maxLevel === 20 ? '0.1' : res?.percentileTop ?? '-'}%
               </p>
               <p className={`mt-1 text-xs ${lastCompletedRun.maxLevel === 20 ? 'text-amber-700' : 'text-white/80'}`}>

@@ -41,7 +41,7 @@ export default function ResultGate() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+    <div className="min-h-[100dvh] min-h-screen bg-white flex flex-col items-center justify-center gap-4 p-4">
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}

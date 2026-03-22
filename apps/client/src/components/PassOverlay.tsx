@@ -141,13 +141,13 @@ export default function PassOverlay({
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSkip(); } }}
       aria-label="다음 스테이지로"
-      className="fixed inset-0 bg-black/30 flex items-center justify-center z-40 p-6 cursor-pointer"
+      className="fixed inset-0 bg-black/30 flex items-center justify-center z-40 p-4 sm:p-6 cursor-pointer"
     >
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', damping: 15 }}
-        className="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center"
+        className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-sm w-full text-center mx-4"
       >
         {/* 티어 배지 */}
         <motion.div

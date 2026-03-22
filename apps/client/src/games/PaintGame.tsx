@@ -401,7 +401,7 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
         : null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] p-4 sm:p-6">
       <div ref={containerRef} className="w-full max-w-md relative min-h-[280px]">
         <AnimatePresence mode="wait">
           {(phase === 'instruction' || phase === 'playing') && targetColor && (

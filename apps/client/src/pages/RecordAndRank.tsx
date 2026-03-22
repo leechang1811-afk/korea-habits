@@ -106,9 +106,9 @@ export default function RecordAndRank() {
     streakCount > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white p-6 pb-24">
-      <div className="max-w-md mx-auto">
-        <h1 className="text-2xl font-bold text-toss-text mb-6">기록 & 순위</h1>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white p-4 sm:p-6 pb-24">
+      <div className="max-w-md mx-auto w-full">
+        <h1 className="text-xl sm:text-2xl font-bold text-toss-text mb-4 sm:mb-6">기록 & 순위</h1>
 
         {loading ? (
           <div className="py-12 flex flex-col items-center justify-center gap-4">
@@ -134,9 +134,9 @@ export default function RecordAndRank() {
                 ref={shareCardRef}
                 initial={{ scale: 0.96, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="rounded-3xl p-8 text-center bg-gradient-to-br from-toss-blue to-blue-600 shadow-xl"
+                className="rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-center bg-gradient-to-br from-toss-blue to-blue-600 shadow-xl"
               >
-                <p className="text-5xl md:text-6xl font-black text-white">
+                <p className="text-4xl sm:text-5xl md:text-6xl font-black text-white">
                   상위 {meData?.best_level === 20 ? '0.1' : percentileTop ?? '-'}%
                 </p>
                 {meData?.alltime_rank != null && (
@@ -196,7 +196,7 @@ export default function RecordAndRank() {
                 className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100"
               >
                 <p className="text-slate-500 text-xs mb-3 font-medium">내 점수</p>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3">
                   {[
                     { label: '최고 점수', value: bestScore, accent: true },
                     { label: '최저', value: minScore, accent: false },
@@ -205,7 +205,7 @@ export default function RecordAndRank() {
                   ].map(({ label, value, accent }) => (
                     <div key={label} className="text-center">
                       <p className="text-slate-400 text-[10px] mb-0.5">{label}</p>
-                      <p className={`text-lg font-bold ${accent ? 'text-toss-blue' : 'text-toss-text'}`}>
+                      <p className={`text-base sm:text-lg font-bold ${accent ? 'text-toss-blue' : 'text-toss-text'}`}>
                         {value != null ? value.toLocaleString() : '-'}
                       </p>
                     </div>

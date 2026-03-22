@@ -47,13 +47,13 @@ export default function FailOverlay({ canRevive, remainingRevives = 0, failedLev
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6"
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', damping: 20 }}
-        className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full"
+        className="bg-white rounded-2xl shadow-xl p-5 sm:p-6 max-w-sm w-full mx-4"
       >
         <p className="text-center text-toss-text font-medium mb-1">
           아쉽게도 {failedLevel}단계에서 멈췄어요

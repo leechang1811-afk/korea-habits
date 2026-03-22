@@ -63,11 +63,11 @@ export default function Home() {
   const streakBadge = streakCount >= 30 ? '🏆' : streakCount >= 14 ? '⭐' : streakCount >= 7 ? '🎖️' : null;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 sm:p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center max-w-md w-full"
+        className="text-center max-w-md w-full mx-auto"
       >
         <h1 className="text-2xl md:text-3xl font-bold text-toss-text mb-3 leading-tight">
           내 두뇌 몇 등?

@@ -84,7 +84,7 @@ export default function Tap10Game({ level, onSuccess, onFail }: Tap10GameProps) 
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] p-4 sm:p-6">
       <div className="mb-4 text-center space-y-1">
         <p className="text-lg font-medium text-toss-text">
           {!started ? '탭하면 시작 → 목표 ' : '목표 '}
@@ -102,7 +102,7 @@ export default function Tap10Game({ level, onSuccess, onFail }: Tap10GameProps) 
       <motion.button
         type="button"
         onClick={handleTap}
-        className="w-52 h-52 rounded-full bg-toss-blue text-white font-semibold shadow-md border border-toss-border hover:scale-[1.02] active:scale-[0.98] transition-transform cursor-pointer flex items-center justify-center"
+        className="w-44 h-44 sm:w-52 sm:h-52 min-w-[176px] min-h-[176px] rounded-full bg-toss-blue text-white font-semibold shadow-md border border-toss-border hover:scale-[1.02] active:scale-[0.98] transition-transform cursor-pointer flex items-center justify-center touch-manipulation"
         whileTap={{ scale: 0.98 }}
       >
         탭

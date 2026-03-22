@@ -15,10 +15,12 @@
     "build:server": "cd packages/shared && npm run build && cd ../../apps/server && npm run build",
     "db:generate": "cd apps/server && npm run db:generate",
     "db:migrate": "cd apps/server && npm run db:migrate",
-    "render:sync-db": "node apps/server/scripts/set-render-env.mjs"
+    "render:sync-db": "node apps/server/scripts/set-render-env.mjs",
+    "screenshot": "node scripts/screenshot-combo.mjs"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
+    "puppeteer": "^23.0.0",
     "typescript": "^5.3.0"
   },
   "engines": {

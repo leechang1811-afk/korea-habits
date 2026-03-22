@@ -95,7 +95,7 @@ export default function CalcGame({ level, onSuccess, onFail }: CalcGameProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] p-4 sm:p-6">
       <div className="mb-6 text-toss-sub">제한시간 {timeLeft}초</div>
 
       <AnimatePresence mode="wait">
@@ -109,7 +109,7 @@ export default function CalcGame({ level, onSuccess, onFail }: CalcGameProps) {
           >
             <p className="text-2xl font-medium text-toss-text mb-6">{oxStatement}</p>
             <p className="text-toss-sub mb-4">맞으면 O, 틀리면 X</p>
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-3 sm:gap-4 justify-center">
               <button
                 type="button"
                 onClick={(e) => {
@@ -121,7 +121,7 @@ export default function CalcGame({ level, onSuccess, onFail }: CalcGameProps) {
                     onFail();
                   }
                 }}
-                className="px-8 py-4 rounded-2xl border-2 border-toss-border hover:border-toss-blue transition"
+                className="px-6 sm:px-8 py-4 min-w-[64px] rounded-2xl border-2 border-toss-border hover:border-toss-blue transition touch-manipulation"
               >
                 O
               </button>
@@ -136,7 +136,7 @@ export default function CalcGame({ level, onSuccess, onFail }: CalcGameProps) {
                     onFail();
                   }
                 }}
-                className="px-8 py-4 rounded-2xl border-2 border-toss-border hover:border-toss-blue transition"
+                className="px-6 sm:px-8 py-4 min-w-[64px] rounded-2xl border-2 border-toss-border hover:border-toss-blue transition touch-manipulation"
               >
                 X
               </button>

@@ -2,7 +2,7 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>내 두뇌 몇 등?</title>
     <meta name="description" content="대한민국에서 내 두뇌 순위는 몇 등? 5가지 게임으로 5분 만에 확인 · 한국인 평균과 비교해 드려요" />
     <!-- Open Graph (카카오, 페이스북 등) -->
@@ -23,7 +23,10 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#5B6475;">로딩 중...</div>
+    </div>
+    <noscript><p style="text-align:center;padding:2rem;">JavaScript가 필요합니다. 브라우저에서 JavaScript를 켜 주세요.</p></noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

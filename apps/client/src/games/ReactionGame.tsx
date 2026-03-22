@@ -125,7 +125,7 @@ export default function ReactionGame({ level, onSuccess, onFail }: ReactionGameP
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] p-4 sm:p-6">
       <AnimatePresence mode="wait">
         {(phase === 'instruction' || phase === 'playing') && targetColor && (
           <motion.div
@@ -148,7 +148,7 @@ export default function ReactionGame({ level, onSuccess, onFail }: ReactionGameP
             <button
               type="button"
               onClick={handleShapeClick}
-              className="w-56 h-56 mx-auto block rounded-2xl shadow-md border border-toss-border hover:scale-[1.02] active:scale-[0.98] transition-transform cursor-pointer"
+              className="w-48 h-48 sm:w-56 sm:h-56 min-w-[160px] min-h-[160px] mx-auto block rounded-2xl shadow-md border border-toss-border hover:scale-[1.02] active:scale-[0.98] transition-transform cursor-pointer touch-manipulation"
               style={{
                 backgroundColor: currentColor ? COLOR_MAP[currentColor] : '#E5E7EB',
               }}

@@ -85,7 +85,7 @@ export default function StageHeader({
           style={{ boxShadow: '0 0 8px rgba(49,130,246,0.5)' }}
         />
       </div>
-      <div className="px-3 py-2">
+      <div className="px-3 sm:px-4 py-2 sm:py-2.5">
         {/* 1행: 유형·단계·제한시간·mute — 모바일 최적화 */}
         <div className="flex items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-1.5 min-w-0 shrink">

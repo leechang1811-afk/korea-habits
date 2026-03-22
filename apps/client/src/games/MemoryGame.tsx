@@ -122,7 +122,7 @@ export default function MemoryGame({ level, onSuccess, onFail }: MemoryGameProps
   if (!target) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] p-4 sm:p-6">
       <div className="mb-4 text-toss-sub">
         제한시간 {phase === 'show' ? timeLimit : timeLeft}초
       </div>
@@ -141,7 +141,7 @@ export default function MemoryGame({ level, onSuccess, onFail }: MemoryGameProps
                 className="grid gap-2 mx-auto mb-6"
                 style={{
                   gridTemplateColumns: `repeat(${params.patternSize}, 1fr)`,
-                  width: 'min(240px, 90vw)',
+                  width: 'min(240px, min(90vw, 280px))',
                 }}
               >
                 {target.map((v, i) => (
@@ -178,7 +178,7 @@ export default function MemoryGame({ level, onSuccess, onFail }: MemoryGameProps
                   className="grid gap-2 mx-auto mb-4"
                   style={{
                     gridTemplateColumns: `repeat(${params.patternSize}, 1fr)`,
-                    width: 'min(240px, 90vw)',
+                    width: 'min(240px, min(90vw, 280px))',
                   }}
                 >
                   {Array.from({ length: (params.patternSize ?? 3) ** 2 }, (_, i) => (
