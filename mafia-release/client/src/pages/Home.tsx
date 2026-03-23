@@ -1092,7 +1092,7 @@ export default function Home() {
 
       {/* 야간 행동 하단 CTA */}
       {(phase === "NIGHT_MAFIA" || phase === "NIGHT_DOCTOR") && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 px-5 pb-8 pt-3 bg-gradient-to-t from-[#07070a] to-transparent flex justify-center pointer-events-none">
+        <div className="fixed bottom-[96px] left-0 right-0 z-30 px-5 pb-8 pt-3 bg-gradient-to-t from-[#07070a] to-transparent flex justify-center pointer-events-none">
           <button
             disabled={!nightActionTarget}
             onClick={phase === "NIGHT_MAFIA" ? confirmMafiaSelection : confirmDoctorSelection}
@@ -1107,7 +1107,7 @@ export default function Home() {
         </div>
       )}
       {phase === "NIGHT_POLICE" && !policeRevealShowing && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 px-5 pb-8 pt-3 bg-gradient-to-t from-[#07070a] to-transparent flex justify-center pointer-events-none">
+        <div className="fixed bottom-[96px] left-0 right-0 z-30 px-5 pb-8 pt-3 bg-gradient-to-t from-[#07070a] to-transparent flex justify-center pointer-events-none">
           <button
             disabled={!nightActionTarget}
             onClick={() => { /* 플레이어 탭시 이미 reveal showing 처리됨 */ }}
@@ -1118,7 +1118,7 @@ export default function Home() {
         </div>
       )}
       {phase === "NIGHT_POLICE" && policeRevealShowing && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 px-5 pb-8 pt-3 bg-gradient-to-t from-[#07070a] to-transparent flex flex-col items-center gap-2 pointer-events-none">
+        <div className="fixed bottom-[96px] left-0 right-0 z-30 px-5 pb-8 pt-3 bg-gradient-to-t from-[#07070a] to-transparent flex flex-col items-center gap-2 pointer-events-none">
           <p className="text-white/40 text-xs">확인을 완료했으면 확인 완료 버튼을 눌러주세요</p>
           <button
             onClick={confirmPoliceReveal}
@@ -1131,7 +1131,7 @@ export default function Home() {
 
       {/* LOBBY sticky CTA */}
       {phase === "LOBBY" && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center px-5 pb-8 pt-3 bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none">
+        <div className="fixed bottom-[96px] left-0 right-0 z-30 flex justify-center px-5 pb-8 pt-3 bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none">
           {lobbyStep === "ROLES_SETUP" ? (
             <button
               onClick={() => {
@@ -1199,7 +1199,7 @@ export default function Home() {
 
       {/* TIMER 하단 CTA — 패스(좌) + 선택 완료(우) */}
       {phase === "TIMER" && !executionResult && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-8 pt-4 bg-gradient-to-t from-white via-white/90 to-transparent flex items-center gap-3 pointer-events-none">
+        <div className="fixed bottom-[96px] left-0 right-0 z-40 px-4 pb-8 pt-4 bg-gradient-to-t from-white via-white/90 to-transparent flex items-center gap-3 pointer-events-none">
           {/* 패스 */}
           <button
             onClick={() => {
@@ -1735,7 +1735,7 @@ export default function Home() {
               </div>
 
               {/* 하단 CTA */}
-              <div className="fixed bottom-0 left-0 right-0 px-6 pb-12 pt-4 bg-gradient-to-t from-black via-black/90 to-transparent">
+              <div className="fixed bottom-[96px] left-0 right-0 px-6 pb-12 pt-4 bg-gradient-to-t from-black via-black/90 to-transparent">
                 <button
                   onClick={handleStartNewGame}
                   className="w-full py-4 rounded-2xl font-bold text-lg bg-blue-500 text-white transition-all active:scale-95"
@@ -1906,9 +1906,11 @@ export default function Home() {
       </div>
 
       {/* 하단 배너 광고 (각 화면 맨 아래) */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-black">
-        <BannerAd />
-      </div>
+      {phase !== "RESULT" && (
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-black">
+          <BannerAd />
+        </div>
+      )}
     </div>
   );
 }
