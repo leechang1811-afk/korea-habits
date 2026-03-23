@@ -3,8 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { adsService } from '../services/ads';
 
-const RESULT_AD_COOLDOWN_MS = 25_000;
+const INTERSTITIAL_COOLDOWN_MS = 30_000; // PO: 30초 쿨다운 (업계 권장)
 const NAVIGATE_TIMEOUT_MS = 800;
+
+/** 당일 첫 플레이 결과인지 (신규/복귀 사용자 이탈 방지) */
+function isFirstResultToday(): boolean {
+  const key = 'first_result_date';
+  const today = new Date().toDateString();
+  const stored = localStorage.getItem(key);
+  if (stored !== today) {
+    localStorage.setItem(key, today);
+    return true;
+  }
+  return false;
+}
 
 export default function ResultGate() {
   const navigate = useNavigate();
@@ -21,7 +33,9 @@ export default function ResultGate() {
 
     (async () => {
       try {
-        const shown = await adsService.showInterstitial();
+        // PO: 당일 첫 결과 화면에는 전면광고 생략 (신규·복귀 이탈 방지)
+        const skipForFirst = isFirstResultToday();
+        const shown = skipForFirst ? false : await adsService.showInterstitial();
         if (shown) {
           localStorage.setItem('last_interstitial_at', String(Date.now()));
         }
