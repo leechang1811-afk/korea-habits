@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 type TossAdsModule = typeof import("@apps-in-toss/web-framework");
 
 let cachedModule: TossAdsModule | null = null;
+let bannerInitState: "idle" | "pending" | "ready" | "failed" = "idle";
+let bannerInitPromise: Promise<boolean> | null = null;
 
 async function getTossAds(): Promise<TossAdsModule | null> {
   if (cachedModule) return cachedModule;
@@ -16,6 +18,40 @@ async function getTossAds(): Promise<TossAdsModule | null> {
   }
 }
 
+async function ensureBannerInitialized(): Promise<boolean> {
+  const mod = await getTossAds();
+  if (!mod?.TossAds?.initialize?.isSupported?.()) return false;
+
+  if (bannerInitState === "ready") return true;
+  if (bannerInitState === "pending" && bannerInitPromise) return bannerInitPromise;
+
+  bannerInitState = "pending";
+  bannerInitPromise = new Promise<boolean>((resolve) => {
+    mod.TossAds.initialize({
+      callbacks: {
+        onInitialized: () => {
+          bannerInitState = "ready";
+          resolve(true);
+        },
+        onInitializationFailed: (err) => {
+          const message = String((err as { message?: string })?.message ?? err ?? "");
+          // 이미 초기화된 상태면 정상으로 간주
+          if (message.includes("Already initialized")) {
+            bannerInitState = "ready";
+            resolve(true);
+            return;
+          }
+          bannerInitState = "failed";
+          console.warn("[TossAds] 초기화 실패:", err);
+          resolve(false);
+        },
+      },
+    });
+  });
+
+  return bannerInitPromise;
+}
+
 /** 배너 광고 SDK 초기화 및 부착 훅 */
 export function useTossBanner() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -24,15 +60,10 @@ export function useTossBanner() {
   useEffect(() => {
     let cancelled = false;
     getTossAds().then((mod) => {
-      if (cancelled || !mod?.TossAds?.initialize?.isSupported?.()) return;
       modRef.current = mod;
-      mod.TossAds.initialize({
-        callbacks: {
-          onInitialized: () => !cancelled && setIsInitialized(true),
-          onInitializationFailed: (err) =>
-            console.warn("[TossAds] 초기화 실패:", err),
-        },
-      });
+    });
+    ensureBannerInitialized().then((ok) => {
+      if (!cancelled && ok) setIsInitialized(true);
     });
     return () => {
       cancelled = true;
