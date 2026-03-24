@@ -576,13 +576,14 @@ export default function App() {
   return (
     <main className="mx-auto w-full max-w-5xl min-h-[100dvh] bg-slate-50 text-toss-text">
       <section className="px-4 sm:px-6 lg:px-8 pt-7 sm:pt-8 pb-4 text-center">
-        <p className="text-sm font-semibold text-emerald-700">좋은 습관 기르기</p>
+        <p className="text-sm font-semibold text-emerald-700">좋은 습관 만들기</p>
         <h1 className="text-2xl font-bold mt-1">
           {view === 'detail' && selectedProject ? selectedProject.name : '나의 홈화면'}
         </h1>
         <p className="text-sm text-toss-sub mt-2">
-          하루 체크로 습관을 쌓아요. 목표를 달성하면 다음 단계로 넘어가요.
-          {deviceType === 'desktop' ? ' 큰 화면에서는 기록을 한눈에 볼 수 있어요.' : ''}
+          하루 체크로 습관을 쌓아요.
+          <br />
+          목표를 달성하면 다음 단계로 넘어가요.
         </p>
       </section>
 
