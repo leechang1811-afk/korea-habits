@@ -693,12 +693,13 @@ export default function App() {
           </div>
         </div>
         <div
-          className={`rounded-xl bg-white border p-3 mt-2 ${
-            overallTodayRate === 100 ? 'border-emerald-500' : 'border-emerald-200'
+          className={`rounded-xl bg-white border-2 p-3 mt-2 ${
+            overallTodayRate === 100 ? 'border-emerald-500' : 'border-emerald-300'
           }`}
         >
-          <p className="text-xs text-toss-sub">오늘 하루 달성률</p>
-          <p className="text-xl font-semibold mt-1">{overallTodayRate}%</p>
+          <p className="text-sm font-semibold text-emerald-700">오늘 하루 달성률</p>
+          <p className="text-2xl font-bold text-emerald-700 mt-1">{overallTodayRate}%</p>
+          <p className="text-sm font-semibold text-emerald-700 mt-1">나의 목표들</p>
           <div className="mt-2 space-y-1">
             {todayProjectStatus.length === 0 ? (
               <p className="text-[11px] text-toss-sub">아직 만든 프로젝트가 없어요</p>
@@ -805,7 +806,7 @@ export default function App() {
                   scrollToTop();
                 }}
               >
-                전체 개요
+                나의 전체 목표
               </button>
               <button
                 type="button"
@@ -818,7 +819,9 @@ export default function App() {
                 }}
                 disabled={!selectedProject}
               >
-                목표 상세
+                <span className="block max-w-[240px] truncate">
+                  {view === 'detail' && selectedProject ? `목표 상세(${selectedProject.name})` : '목표 상세'}
+                </span>
               </button>
             </div>
             <button
@@ -836,7 +839,7 @@ export default function App() {
                 <div>
                   <h3 className="font-semibold">나의 전체 목표 개요</h3>
                   <p className="text-xs text-toss-sub mt-1">
-                    이 화면은 “전체 개요”예요. O/X와 전체 달성률을 먼저 보고,
+                    이 화면은 “나의 전체 목표”예요. O/X와 전체 달성률을 먼저 보고,
                     목표별로 들어가서 일자별로 체크하세요.
                   </p>
                 </div>
