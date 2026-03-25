@@ -794,7 +794,7 @@ export default function App() {
 
       {view !== 'create' && (
         <>
-          <section className="px-4 sm:px-6 lg:px-8 pb-3 flex items-center gap-2 overflow-x-auto text-left">
+          <section className="px-4 sm:px-6 lg:px-8 mt-3 pb-3 flex items-center gap-2 overflow-x-auto text-left">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -834,7 +834,7 @@ export default function App() {
           </section>
 
           {view === 'list' && (
-            <section className="px-4 sm:px-6 lg:px-8 pb-8">
+            <section className="px-4 sm:px-6 lg:px-8 pt-2 pb-8">
               <div className="flex items-end justify-between mb-3">
                 <div>
                   <h3 className="font-semibold">나의 전체 목표 개요</h3>
