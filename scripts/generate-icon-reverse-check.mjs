@@ -6,7 +6,8 @@ import puppeteer from 'puppeteer';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..');
 const outDir = path.join(projectRoot, 'assets', 'appintoss');
-const outPath = path.join(outDir, 'app-icon-1024-v3-reverse-check.png');
+// App-in-Toss icon variant (used for v4 clean gray check)
+const outPath = path.join(outDir, 'app-icon-1024-v4-clean-gray-check.png');
 
 async function main() {
   await fs.mkdir(outDir, { recursive: true });
@@ -37,8 +38,8 @@ async function main() {
 
           <div style="
             position:absolute;left:0;right:0;top:320px;text-align:center;
-            color:rgba(255,255,255,.92);font-size:74px;font-weight:700;letter-spacing:-0.5px;">
-            습관 기르기
+            color:rgba(255,255,255,.96);font-size:68px;font-weight:900;letter-spacing:-0.8px;">
+            좋은 습관 만들기
           </div>
         </div>
       </body>
