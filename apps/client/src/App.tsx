@@ -295,6 +295,11 @@ export default function App() {
   const today = toDateKey();
   const calendarKeys = useMemo(() => lastNDays(30), []);
 
+  function scrollToTop(): void {
+    if (typeof window === 'undefined') return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
@@ -756,7 +761,10 @@ export default function App() {
                 className={`rounded-lg px-3 py-2 text-sm whitespace-nowrap ${
                   view === 'list' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'
                 }`}
-                onClick={() => setView('list')}
+                onClick={() => {
+                  setView('list');
+                  scrollToTop();
+                }}
               >
                 전체 개요
               </button>
@@ -765,7 +773,10 @@ export default function App() {
                 className={`rounded-lg px-3 py-2 text-sm whitespace-nowrap ${
                   view === 'detail' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'
                 }`}
-                onClick={() => setView('detail')}
+                onClick={() => {
+                  setView('detail');
+                  scrollToTop();
+                }}
                 disabled={!selectedProject}
               >
                 목표 상세
@@ -834,6 +845,7 @@ export default function App() {
                           onClick={() => {
                             setSelectedProjectId(project.id);
                             setView('detail');
+                          scrollToTop();
                           }}
                         >
                           목표 상세로 들어가기
