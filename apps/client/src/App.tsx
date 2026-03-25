@@ -305,11 +305,6 @@ export default function App() {
   const today = toDateKey();
   const calendarKeys = useMemo(() => lastNDays(30), []);
 
-  function scrollToTop(): void {
-    if (typeof window === 'undefined') return;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   const celebrationTimeoutRef = useRef<number | null>(null);
   const celebrationSliceTimeoutsRef = useRef<number[]>([]);
   const dailyStageSuccessCountRef = useRef<number>(0);
@@ -848,6 +843,17 @@ export default function App() {
 
       {view === 'create' && (
         <section className="px-4 sm:px-6 lg:px-8 pb-8">
+          {state.projects.length > 0 && (
+            <div className="mb-3">
+              <button
+                type="button"
+                className="rounded-lg px-3 py-2 text-sm bg-white border border-toss-border text-slate-700 hover:bg-slate-50"
+                onClick={() => setView('list')}
+              >
+                ← 나의 전체 목표로 돌아가기
+              </button>
+            </div>
+          )}
           <div className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
             <h2 className="font-semibold">새 목표 만들기</h2>
             <form className="mt-3 space-y-3" onSubmit={createProject}>
@@ -915,10 +921,7 @@ export default function App() {
                 className={`rounded-lg px-3 py-2 text-sm whitespace-nowrap ${
                   view === 'list' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'
                 }`}
-                onClick={() => {
-                  setView('list');
-                  scrollToTop();
-                }}
+                onClick={() => setView('list')}
               >
                 나의 전체 목표
               </button>
@@ -927,10 +930,7 @@ export default function App() {
                 className={`rounded-lg px-3 py-2 text-sm whitespace-nowrap ${
                   view === 'detail' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'
                 }`}
-                onClick={() => {
-                  setView('detail');
-                  scrollToTop();
-                }}
+                onClick={() => setView('detail')}
                 disabled={!selectedProject}
               >
                 <span className="block max-w-[240px] truncate">
@@ -1001,7 +1001,6 @@ export default function App() {
                           onClick={() => {
                             setSelectedProjectId(project.id);
                             setView('detail');
-                          scrollToTop();
                           }}
                         >
                           목표 상세로 들어가기
