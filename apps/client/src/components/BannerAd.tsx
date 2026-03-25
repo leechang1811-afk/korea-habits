@@ -13,18 +13,54 @@ function getBannerSdk() {
   return sdkPromise;
 }
 
+function tossBannerSupported(sdk: typeof import('@apps-in-toss/web-framework')): boolean {
+  try {
+    return sdk.TossAds?.attachBanner?.isSupported?.() === true;
+  } catch {
+    return false;
+  }
+}
+
 function ensureTossAdsInit(sdk: typeof import('@apps-in-toss/web-framework')): Promise<boolean> {
   if (initPromise) return initPromise;
-  if (sdk.TossAds?.initialize?.isSupported?.() !== true) return Promise.resolve(false);
+  try {
+    if (sdk.TossAds?.initialize?.isSupported?.() !== true) return Promise.resolve(false);
+  } catch {
+    return Promise.resolve(false);
+  }
   initPromise = new Promise((resolve) => {
     sdk.TossAds.initialize({
       callbacks: {
         onInitialized: () => resolve(true),
-        onInitializationFailed: () => resolve(false),
+        onInitializationFailed: () => {
+          initPromise = null;
+          resolve(false);
+        },
       },
     });
   });
   return initPromise;
+}
+
+function tryAttach(
+  sdk: typeof import('@apps-in-toss/web-framework'),
+  container: HTMLDivElement,
+  onDestroy: (fn: () => void) => void
+) {
+  if (!tossBannerSupported(sdk)) return;
+  ensureTossAdsInit(sdk).then((ok) => {
+    if (!ok || !container.isConnected) return;
+    try {
+      const result = sdk.TossAds.attachBanner(AD_GROUP_BANNER, container, {
+        theme: 'light',
+        tone: 'grey',
+        variant: 'card',
+      });
+      if (result?.destroy) onDestroy(result.destroy);
+    } catch {
+      // SDK/네트워크 이슈 — 아래 지연 재시도에 맡김
+    }
+  });
 }
 
 export default function BannerAd() {
@@ -35,27 +71,17 @@ export default function BannerAd() {
 
   useEffect(() => {
     if (!AD_GROUP_BANNER) return;
-    // 첫 페인트 후 배너 SDK 로딩 (초기 체감 로딩 개선)
+
     const timer = setTimeout(() => {
-      getBannerSdk().then((sdk) => {
-        if (sdk.TossAds?.attachBanner?.isSupported?.() !== true) return;
-        ensureTossAdsInit(sdk).then((ok) => {
-          if (!ok || !containerRef.current) return;
-          try {
-            const result = sdk.TossAds.attachBanner(AD_GROUP_BANNER, containerRef.current, {
-              theme: 'light',
-              tone: 'grey',
-              variant: 'card',
-            });
-            destroyRef.current = result?.destroy ?? null;
-          } catch {
-            // ignore
-          }
-        });
-      }).catch(() => {
-        // ignore
-      });
+      const container = containerRef.current;
+      if (!container) return;
+      getBannerSdk()
+        .then((sdk) => tryAttach(sdk, container, (destroy) => {
+          destroyRef.current = destroy;
+        }))
+        .catch(() => {});
     }, 600);
+
     return () => {
       clearTimeout(timer);
       destroyRef.current?.();
@@ -67,7 +93,6 @@ export default function BannerAd() {
 
   return (
     <>
-      {/* 콘텐츠가 배너에 가려지지 않도록 공간 확보 */}
       <div style={{ height: `calc(${BANNER_HEIGHT_PX}px + env(safe-area-inset-bottom))` }} aria-hidden="true" />
       <div className="fixed left-0 right-0 bottom-0 z-40 pointer-events-none">
         <div className="mx-auto max-w-md px-4 sm:px-6 pb-[env(safe-area-inset-bottom)] pointer-events-auto">

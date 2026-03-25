@@ -538,6 +538,19 @@ export default function App() {
       };
     });
   }, [state.projects, today]);
+  const selectedProjectTodayRate = useMemo(() => {
+    if (!selectedProject) return 0;
+    const doneToday = selectedProject.stages.some((stage) => stage.checkDates.includes(today));
+    return doneToday ? 100 : 0;
+  }, [selectedProject, today]);
+  const displayTodayRate =
+    view === 'detail' && selectedProject ? selectedProjectTodayRate : overallTodayRate;
+  const displayTodayProjectRows = useMemo(() => {
+    if (view === 'detail' && selectedProject) {
+      return todayProjectStatus.filter((row) => row.projectId === selectedProject.id);
+    }
+    return todayProjectStatus;
+  }, [view, selectedProject, todayProjectStatus]);
 
   useEffect(() => {
     if (state.projects.length === 0) return;
@@ -580,7 +593,7 @@ export default function App() {
   const stairHeights = [14, 24, 38, 54, 72, 92, 114];
   const stepIndex = Math.round((dashboardRate / 100) * (stairHeights.length - 1));
   const climberBottom = stairHeights[Math.max(0, Math.min(stepIndex, stairHeights.length - 1))] + 18;
-  const checkButtonLabel = deviceType === 'mobile' ? '오늘 완료 체크' : '오늘 완료하기';
+  const checkButtonLabel = deviceType === 'mobile' ? '오늘 완료 체크하기' : '오늘 완료하기';
   const climberIcon = dashboardRate <= 0 ? '🚶‍➡️' : '🏃‍➡️';
   const selectedProjectDateStageMap = useMemo(() => {
     if (!selectedProject) return new Map<string, number>();
@@ -617,8 +630,21 @@ export default function App() {
     <main className="mx-auto w-full max-w-5xl min-h-[100dvh] bg-slate-50 text-toss-text">
       <section className="px-4 sm:px-6 lg:px-8 pt-7 sm:pt-8 pb-4 text-center">
         <p className="text-sm font-semibold text-emerald-700">좋은 습관 만들기</p>
-        <h1 className="text-2xl font-bold mt-1">
-          {view === 'detail' && selectedProject ? selectedProject.name : '나의 홈화면'}
+        <h1
+          className={`font-bold mt-1 leading-snug ${
+            view === 'detail' && selectedProject ? 'text-2xl sm:text-3xl' : 'text-2xl'
+          }`}
+        >
+          {view === 'detail' && selectedProject ? (
+            <span className="text-slate-900">
+              목표 · {selectedProject.name} · {activeStage(selectedProject).stageNumber}단계
+              {activeStage(selectedProject).title
+                ? ` · ${activeStage(selectedProject).title}`
+                : ' · 다음 단계를 설정해 주세요'}
+            </span>
+          ) : (
+            '나의 홈화면'
+          )}
         </h1>
         <p className="text-sm text-toss-sub mt-2">
           하루 체크로 습관을 쌓아요.
@@ -689,22 +715,24 @@ export default function App() {
                 ? `${activeStage(selectedProject).stageNumber}단계`
                 : `${state.projects.length}개`}
             </p>
-            <p className="text-[11px] text-toss-sub mt-1">오늘 달성률 {overallTodayRate}%</p>
+            <p className="text-[11px] text-toss-sub mt-1">오늘 달성률 {displayTodayRate}%</p>
           </div>
         </div>
         <div
           className={`rounded-xl bg-white border-2 p-3 mt-2 ${
-            overallTodayRate === 100 ? 'border-emerald-500' : 'border-emerald-300'
+            displayTodayRate === 100 ? 'border-emerald-500' : 'border-emerald-300'
           }`}
         >
           <p className="text-sm font-semibold text-emerald-700">오늘 하루 달성률</p>
-          <p className="text-2xl font-bold text-emerald-700 mt-1">{overallTodayRate}%</p>
-          <p className="text-sm font-semibold text-emerald-700 mt-1">나의 목표들</p>
+          <p className="text-2xl font-bold text-emerald-700 mt-1">{displayTodayRate}%</p>
+          <p className="text-sm font-semibold text-emerald-700 mt-1">
+            {view === 'detail' && selectedProject ? '이 목표' : '나의 목표들'}
+          </p>
           <div className="mt-2 space-y-1">
-            {todayProjectStatus.length === 0 ? (
+            {displayTodayProjectRows.length === 0 ? (
               <p className="text-[11px] text-toss-sub">아직 만든 프로젝트가 없어요</p>
             ) : (
-              todayProjectStatus.map((item) => (
+              displayTodayProjectRows.map((item) => (
                 <div key={item.projectId} className="flex items-center justify-between text-xs">
                   <span className="text-slate-600 truncate pr-2">{item.projectName}</span>
                   <span className={item.doneToday ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'}>
@@ -933,10 +961,10 @@ export default function App() {
                   </form>
                 ) : (
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="font-semibold">{selectedProject.name}</h3>
+                    <p className="text-xs text-toss-sub">목표 이름은 상단 제목과 같아요</p>
                     <button
                       type="button"
-                      className="text-xs text-slate-500 border border-slate-300 rounded-md px-2 py-1"
+                      className="text-xs text-slate-500 border border-slate-300 rounded-md px-2 py-1 shrink-0"
                       onClick={() => startEditProject(selectedProject)}
                     >
                       프로젝트명 수정
@@ -956,10 +984,7 @@ export default function App() {
                   const canCheckToday = isStageWindowToday(current, today) && !current.completed && !current.needsSetup;
                   return (
                     <>
-                      <h4 className="font-semibold">
-                        {current.stageNumber}단계: {current.title || '목표를 설정해 주세요'}
-                      </h4>
-                      <p className="text-sm text-toss-sub mt-1">
+                      <p className="text-sm font-semibold text-slate-800">
                         {current.startDate} ~ {current.endDate} · 달성률 {currentRate}%
                       </p>
                       {current.needsSetup && (
@@ -1020,9 +1045,11 @@ export default function App() {
                       )}
                       <button
                         type="button"
-                        className={`mt-3 w-full rounded-xl py-3 font-medium ${
-                          current.checkDates.includes(today) ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-700'
-                        } ${canCheckToday ? '' : 'opacity-60'}`}
+                        className={`mt-3 w-full rounded-xl py-3 font-medium border-2 ${
+                          current.checkDates.includes(today)
+                            ? 'bg-emerald-500 text-white border-emerald-500'
+                            : 'bg-slate-100 text-slate-700 border-emerald-300'
+                        } ${canCheckToday ? '' : 'opacity-60 border-emerald-300'}`}
                         onClick={() => toggleTodayOnActiveStage(selectedProject.id)}
                         disabled={!canCheckToday}
                       >

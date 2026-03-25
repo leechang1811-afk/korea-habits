@@ -1,9 +1,10 @@
 /**
  * 앱인토스 통합 광고 (인앱 광고 2.0 ver2) 연동
  *
- * 성능 최적화:
- * - 초기 번들에서 광고 SDK를 정적으로 불러오지 않음
- * - 광고 필요 시점에만 동적 import
+ * - 첫 호출 시에만 @apps-in-toss/web-framework 동적 import
+ * - 실제 연동 여부는 ReactNativeWebView가 아니라 loadFullScreenAd.isSupported()로 판별
+ *   (앱인토스 WebView에 RN WebView 객체가 없어도 브릿지가 동작하는 경우가 있음)
+ * - 샌드박스/내부 테스트: VITE_AIT_USE_TEST_AD_IDS=true 시 공식 테스트용 광고 ID 사용
  */
 
 export interface AdsService {
@@ -13,20 +14,33 @@ export interface AdsService {
   showRewarded(type: 'revive' | 'result'): Promise<boolean>;
 }
 
-// 광고 그룹 ID (앱인토스 콘솔 발급) - env로 오버라이드 가능
-const AD_GROUP_INTERSTITIAL =
-  import.meta.env.VITE_AD_GROUP_INTERSTITIAL ?? 'ait.v2.live.ec8754e569b4450ce';
-const AD_GROUP_REWARDED =
-  import.meta.env.VITE_AD_GROUP_REWARDED ?? 'ait.v2.live.aa19920554fe4121';
-export const AD_GROUP_BANNER =
-  import.meta.env.VITE_AD_GROUP_BANNER ?? 'ait.v2.live.2c66bc8b686cc4562';
+const USE_TEST_AD_IDS = import.meta.env.VITE_AIT_USE_TEST_AD_IDS === 'true';
 
-/** 토스 앱 WebView 내부에서만 true */
-function canUseRealAds(): boolean {
-  if (!AD_GROUP_INTERSTITIAL || !AD_GROUP_REWARDED) return false;
-  if (typeof window === 'undefined') return false;
-  // 웹/PC에서는 SDK 로딩 자체를 피해서 초기 로딩을 가볍게 유지
-  return Boolean((window as Window & { ReactNativeWebView?: unknown }).ReactNativeWebView);
+/** 앱인토스 문서의 샌드박스용 테스트 ID (ADS_INAPPTOSS.md) */
+const TEST_AD = {
+  interstitial: 'ait-ad-test-interstitial-id',
+  rewarded: 'ait-ad-test-rewarded-id',
+  banner: 'ait-ad-test-banner-id',
+} as const;
+
+const AD_GROUP_INTERSTITIAL =
+  import.meta.env.VITE_AD_GROUP_INTERSTITIAL ??
+  (USE_TEST_AD_IDS ? TEST_AD.interstitial : 'ait.v2.live.ec8754e569b4450ce');
+const AD_GROUP_REWARDED =
+  import.meta.env.VITE_AD_GROUP_REWARDED ??
+  (USE_TEST_AD_IDS ? TEST_AD.rewarded : 'ait.v2.live.aa19920554fe4121');
+export const AD_GROUP_BANNER =
+  import.meta.env.VITE_AD_GROUP_BANNER ??
+  (USE_TEST_AD_IDS ? TEST_AD.banner : 'ait.v2.live.2c66bc8b68cc4562');
+
+function safeIsFullScreenAdsSupported(
+  sdk: typeof import('@apps-in-toss/web-framework')
+): boolean {
+  try {
+    return sdk.loadFullScreenAd?.isSupported?.() === true;
+  } catch {
+    return false;
+  }
 }
 
 let adsSdkPromise: Promise<typeof import('@apps-in-toss/web-framework')> | null = null;
@@ -37,16 +51,41 @@ function getAdsSdk() {
   return adsSdkPromise;
 }
 
+let resolvedImplPromise: Promise<AdsService> | null = null;
+
+function resolveAdsImpl(): Promise<AdsService> {
+  if (!resolvedImplPromise) {
+    resolvedImplPromise = (async () => {
+      if (!AD_GROUP_INTERSTITIAL || !AD_GROUP_REWARDED) {
+        return new MockAdsService();
+      }
+      if (typeof window === 'undefined') {
+        return new MockAdsService();
+      }
+      try {
+        const sdk = await getAdsSdk();
+        if (safeIsFullScreenAdsSupported(sdk)) {
+          return new AppsInTossAdsService();
+        }
+      } catch {
+        /* 번들 로드 실패 등 */
+      }
+      return new MockAdsService();
+    })();
+  }
+  return resolvedImplPromise;
+}
+
 /** 앱인토스 실제 연동 */
 class AppsInTossAdsService implements AdsService {
   private _interstitialLoaded = false;
   private _rewardedLoaded = false;
   private _lastInterstitialAt = 0;
-  private readonly COOLDOWN_MS = 30_000; // PO: 30초 (업계 권장, UX-수익 균형)
+  private readonly COOLDOWN_MS = 30_000;
 
   async loadInterstitial(): Promise<void> {
     const sdk = await getAdsSdk();
-    if (sdk.loadFullScreenAd?.isSupported?.() !== true) throw new Error('ads not supported');
+    if (!safeIsFullScreenAdsSupported(sdk)) throw new Error('ads not supported');
     return new Promise((resolve, reject) => {
       sdk.loadFullScreenAd({
         options: { adGroupId: AD_GROUP_INTERSTITIAL },
@@ -66,7 +105,11 @@ class AppsInTossAdsService implements AdsService {
 
   async showInterstitial(): Promise<boolean> {
     const sdk = await getAdsSdk();
-    if (sdk.showFullScreenAd?.isSupported?.() !== true) return false;
+    try {
+      if (sdk.showFullScreenAd?.isSupported?.() !== true) return false;
+    } catch {
+      return false;
+    }
     if (Date.now() - this._lastInterstitialAt < this.COOLDOWN_MS) return false;
     if (!this._interstitialLoaded) {
       try {
@@ -90,7 +133,9 @@ class AppsInTossAdsService implements AdsService {
             resolve(shown);
             sdk.loadFullScreenAd({
               options: { adGroupId: AD_GROUP_INTERSTITIAL },
-              onEvent: (e) => { if (e.type === 'loaded') this._interstitialLoaded = true; },
+              onEvent: (e) => {
+                if (e.type === 'loaded') this._interstitialLoaded = true;
+              },
               onError: () => {},
             });
           }
@@ -105,7 +150,7 @@ class AppsInTossAdsService implements AdsService {
 
   async loadRewarded(): Promise<void> {
     const sdk = await getAdsSdk();
-    if (sdk.loadFullScreenAd?.isSupported?.() !== true) throw new Error('ads not supported');
+    if (!safeIsFullScreenAdsSupported(sdk)) throw new Error('ads not supported');
     return new Promise((resolve, reject) => {
       sdk.loadFullScreenAd({
         options: { adGroupId: AD_GROUP_REWARDED },
@@ -125,7 +170,11 @@ class AppsInTossAdsService implements AdsService {
 
   async showRewarded(_type: 'revive' | 'result'): Promise<boolean> {
     const sdk = await getAdsSdk();
-    if (sdk.showFullScreenAd?.isSupported?.() !== true) return false;
+    try {
+      if (sdk.showFullScreenAd?.isSupported?.() !== true) return false;
+    } catch {
+      return false;
+    }
     if (!this._rewardedLoaded) {
       try {
         await this.loadRewarded();
@@ -145,7 +194,9 @@ class AppsInTossAdsService implements AdsService {
             resolve(earned);
             sdk.loadFullScreenAd({
               options: { adGroupId: AD_GROUP_REWARDED },
-              onEvent: (e) => { if (e.type === 'loaded') this._rewardedLoaded = true; },
+              onEvent: (e) => {
+                if (e.type === 'loaded') this._rewardedLoaded = true;
+              },
               onError: () => {},
             });
           }
@@ -159,7 +210,7 @@ class AppsInTossAdsService implements AdsService {
   }
 }
 
-/** Mock 구현 - 토스 앱 외부(웹, 개발환경)에서 사용 */
+/** Mock 구현 - 브라우저·미지원 WebView */
 class MockAdsService implements AdsService {
   private _interstitialLoaded = false;
   private _rewardedLoaded = false;
@@ -194,6 +245,9 @@ class MockAdsService implements AdsService {
   }
 }
 
-export const adsService: AdsService = canUseRealAds()
-  ? new AppsInTossAdsService()
-  : new MockAdsService();
+export const adsService: AdsService = {
+  loadInterstitial: () => resolveAdsImpl().then((s) => s.loadInterstitial()),
+  showInterstitial: () => resolveAdsImpl().then((s) => s.showInterstitial()),
+  loadRewarded: () => resolveAdsImpl().then((s) => s.loadRewarded()),
+  showRewarded: (type) => resolveAdsImpl().then((s) => s.showRewarded(type)),
+};
