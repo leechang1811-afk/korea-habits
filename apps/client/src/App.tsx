@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import BannerAd from './components/BannerAd';
 import { track } from './services/analytics';
 import { adsService } from './services/ads';
@@ -300,6 +300,18 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  const celebrationTimeoutRef = useRef<number | null>(null);
+  const dailyStageSuccessCountRef = useRef<number>(0);
+  const dailyOverallSuccessCountRef = useRef<number>(0);
+  const lastOverallTodayRateRef = useRef<number>(0);
+  const didInitOverallCelebrationRef = useRef<boolean>(false);
+
+  function showCelebration(message: string, durationMs: number = 2400): void {
+    setCelebrationMessage(message);
+    if (celebrationTimeoutRef.current) window.clearTimeout(celebrationTimeoutRef.current);
+    celebrationTimeoutRef.current = window.setTimeout(() => setCelebrationMessage(null), durationMs);
+  }
+
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
@@ -429,10 +441,11 @@ export default function App() {
       return { ...prev, projects };
     });
     if (willCompleteStage && current) {
-      fireSuccess(current.stageNumber);
-      setCelebrationMessage(`축하해요! ${current.stageNumber}단계를 100% 달성했어요.`);
-      window.setTimeout(() => setCelebrationMessage(null), 2400);
-      track('stage_completed_100', { stage_number: current.stageNumber });
+      dailyStageSuccessCountRef.current += 1;
+      const level = Math.min(10, dailyStageSuccessCountRef.current);
+      fireSuccess(level);
+      showCelebration(`축하해요! ${current.stageNumber}단계를 100% 달성했어요.`, 2400);
+      track('stage_completed_100', { stage_number: current.stageNumber, celebration_level: level });
     }
     track('stage_toggle_today');
   }
@@ -525,6 +538,28 @@ export default function App() {
       };
     });
   }, [state.projects, today]);
+
+  useEffect(() => {
+    if (state.projects.length === 0) return;
+    if (!didInitOverallCelebrationRef.current) {
+      didInitOverallCelebrationRef.current = true;
+      lastOverallTodayRateRef.current = overallTodayRate;
+      return;
+    }
+
+    if (lastOverallTodayRateRef.current < 100 && overallTodayRate === 100) {
+      dailyOverallSuccessCountRef.current += 1;
+      const level = Math.min(
+        10,
+        dailyStageSuccessCountRef.current + dailyOverallSuccessCountRef.current + 1
+      );
+      fireSuccess(level);
+      showCelebration('오늘 하루 100% 달성했어요!');
+      track('overall_today_completed_100', { level });
+    }
+
+    lastOverallTodayRateRef.current = overallTodayRate;
+  }, [overallTodayRate, state.projects.length, todayProjectStatus.length]);
   const selectedProjectRate = useMemo(() => {
     if (!selectedProject) return 0;
     return stageRate(activeStage(selectedProject));
@@ -657,7 +692,11 @@ export default function App() {
             <p className="text-[11px] text-toss-sub mt-1">오늘 달성률 {overallTodayRate}%</p>
           </div>
         </div>
-        <div className="rounded-xl bg-white border border-toss-border p-3 mt-2">
+        <div
+          className={`rounded-xl bg-white border p-3 mt-2 ${
+            overallTodayRate === 100 ? 'border-emerald-500' : 'border-emerald-200'
+          }`}
+        >
           <p className="text-xs text-toss-sub">오늘 하루 달성률</p>
           <p className="text-xl font-semibold mt-1">{overallTodayRate}%</p>
           <div className="mt-2 space-y-1">
@@ -1006,13 +1045,15 @@ export default function App() {
                       return (
                         <div
                           key={dateKey}
-                          className={`h-10 rounded-md border text-[10px] flex flex-col items-center justify-center ${
+                          className={`h-10 rounded-md border text-[12px] text-center flex flex-col items-center justify-center ${
                             foundStageNumber ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-slate-50 text-slate-500 border-slate-200'
                           } ${isToday ? 'ring-2 ring-toss-blue/30' : ''}`}
                           title={`${formatDateLabel(dateKey)} ${foundStageNumber ? `${foundStageNumber}단계 성공` : '기록 없음'}`}
                         >
                           <span>{formatDateLabel(dateKey)}</span>
-                          <span>{foundStageNumber ? `${foundStageNumber}단계` : '-'}</span>
+                          <span className="text-center leading-none">
+                            {foundStageNumber ? `${foundStageNumber}단계` : '-'}
+                          </span>
                         </div>
                       );
                     })}
