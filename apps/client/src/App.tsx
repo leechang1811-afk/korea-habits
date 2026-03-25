@@ -583,7 +583,6 @@ export default function App() {
         <p className="text-sm text-toss-sub mt-2">
           하루 체크로 습관을 쌓아요.
           <br />
-          목표를 달성하면 다음 단계로 넘어가요.
         </p>
       </section>
 
@@ -756,7 +755,7 @@ export default function App() {
               className={`rounded-lg px-3 py-2 text-sm ${view === 'list' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'}`}
               onClick={() => setView('list')}
             >
-              전체 습관보기
+              전체 개요
             </button>
             <button
               type="button"
@@ -764,7 +763,7 @@ export default function App() {
               onClick={() => setView('detail')}
               disabled={!selectedProject}
             >
-              상세 보기
+              목표 상세
             </button>
             <button
               type="button"
@@ -776,62 +775,65 @@ export default function App() {
           </section>
 
           {view === 'list' && (
-            <section className="px-4 sm:px-6 lg:px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-3">
-              {state.projects.map((project) => {
-                const current = activeStage(project);
-                const currentRate = stageRate(current);
-                return (
-                  <article
-                    key={project.id}
-                    className="rounded-xl border border-toss-border bg-white p-4 sm:p-5"
-                    onClick={() => {
-                      setSelectedProjectId(project.id);
-                      setView('detail');
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="font-semibold">{project.name}</h3>
-                        <p className="text-sm text-toss-sub mt-1">
-                          지금 {current.stageNumber}단계 · {current.title || '다음 단계를 설정해 주세요'}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {current.startDate} ~ {current.endDate}
-                        </p>
+            <section className="px-4 sm:px-6 lg:px-8 pb-8">
+              <div className="flex items-end justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold">오늘 전체 개요</h3>
+                  <p className="text-xs text-toss-sub mt-1">O는 오늘 체크 완료, X는 아직이에요</p>
+                </div>
+                <p className="text-xs text-slate-500">오늘 달성률 {overallTodayRate}%</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {state.projects.map((project) => {
+                  const current = activeStage(project);
+                  const currentRate = stageRate(current);
+                  const doneToday = project.stages.some((stage) => stage.checkDates.includes(today));
+
+                  return (
+                    <article key={project.id} className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold">{project.name}</h3>
+                          <p className="text-sm text-toss-sub mt-1">
+                            지금 {current.stageNumber}단계 · {current.title || '다음 단계를 설정해 주세요'}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {current.startDate} ~ {current.endDate}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                          <span
+                            className={
+                              doneToday ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'
+                            }
+                          >
+                            {doneToday ? 'O' : 'X'}
+                          </span>
+                          <button type="button" className="text-xs text-slate-400 hover:text-slate-600" onClick={() => removeProject(project.id)}>
+                            삭제
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        className="text-xs text-slate-400 hover:text-slate-600"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          removeProject(project.id);
-                        }}
-                      >
-                        삭제
-                      </button>
-                    </div>
-                    <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500" style={{ width: `${currentRate}%` }} />
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <p className="text-sm text-slate-700">
-                        현재 {currentRate}% · 기간 기준 {stageRateByConfiguredPeriod(current, project.stageDurationDays, today)}%
-                      </p>
-                      <button
-                        type="button"
-                        className="text-sm text-toss-blue font-medium"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSelectedProjectId(project.id);
-                          setView('detail');
-                        }}
-                      >
-                        상세내용보기
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <p className="text-sm text-slate-700">현재 달성률 {currentRate}%</p>
+                        <button
+                          type="button"
+                          className="text-sm text-toss-blue font-medium"
+                          onClick={() => {
+                            setSelectedProjectId(project.id);
+                            setView('detail');
+                          }}
+                        >
+                          목표 상세로 보기
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             </section>
           )}
 
