@@ -749,25 +749,31 @@ export default function App() {
 
       {view !== 'create' && (
         <>
-          <section className="px-4 sm:px-6 lg:px-8 pb-3 flex gap-2 overflow-x-auto">
+          <section className="px-4 sm:px-6 lg:px-8 pb-3 flex items-center gap-2 overflow-x-auto text-left">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className={`rounded-lg px-3 py-2 text-sm whitespace-nowrap ${
+                  view === 'list' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'
+                }`}
+                onClick={() => setView('list')}
+              >
+                전체 개요
+              </button>
+              <button
+                type="button"
+                className={`rounded-lg px-3 py-2 text-sm whitespace-nowrap ${
+                  view === 'detail' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'
+                }`}
+                onClick={() => setView('detail')}
+                disabled={!selectedProject}
+              >
+                목표 상세
+              </button>
+            </div>
             <button
               type="button"
-              className={`rounded-lg px-3 py-2 text-sm ${view === 'list' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'}`}
-              onClick={() => setView('list')}
-            >
-              전체 개요
-            </button>
-            <button
-              type="button"
-              className={`rounded-lg px-3 py-2 text-sm ${view === 'detail' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'}`}
-              onClick={() => setView('detail')}
-              disabled={!selectedProject}
-            >
-              목표 상세
-            </button>
-            <button
-              type="button"
-              className="rounded-lg px-3 py-2 text-sm bg-white border border-toss-border ml-auto"
+              className="rounded-lg px-3 py-2 text-sm bg-white border border-toss-border ml-auto whitespace-nowrap"
               onClick={() => setView('create')}
             >
               + 새 목표
@@ -778,10 +784,13 @@ export default function App() {
             <section className="px-4 sm:px-6 lg:px-8 pb-8">
               <div className="flex items-end justify-between mb-3">
                 <div>
-                  <h3 className="font-semibold">오늘 전체 개요</h3>
-                  <p className="text-xs text-toss-sub mt-1">O는 오늘 체크 완료, X는 아직이에요</p>
+                  <h3 className="font-semibold">나의 전체 목표 개요</h3>
+                  <p className="text-xs text-toss-sub mt-1">
+                    이 화면은 “전체 개요”예요. O/X와 전체 달성률을 먼저 보고,
+                    목표별로 들어가서 일자별로 체크하세요.
+                  </p>
                 </div>
-                <p className="text-xs text-slate-500">오늘 달성률 {overallTodayRate}%</p>
+                <p className="text-xs text-slate-500">오늘 전체 달성률 {overallTodayRate}%</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -817,17 +826,17 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="mt-3 flex items-center justify-between">
+                      <div className="mt-3">
                         <p className="text-sm text-slate-700">현재 달성률 {currentRate}%</p>
                         <button
                           type="button"
-                          className="text-sm text-toss-blue font-medium"
+                          className="mt-3 w-full rounded-lg bg-toss-blue text-white py-2 text-sm font-medium"
                           onClick={() => {
                             setSelectedProjectId(project.id);
                             setView('detail');
                           }}
                         >
-                          목표 상세로 보기
+                          목표 상세로 들어가기
                         </button>
                       </div>
                     </article>
