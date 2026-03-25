@@ -293,6 +293,7 @@ export default function App() {
   const [nextStageTitle, setNextStageTitle] = useState('');
   const [nextStageDays, setNextStageDays] = useState(7);
   const [celebrationMessage, setCelebrationMessage] = useState<string | null>(null);
+  const [celebrationCountdown, setCelebrationCountdown] = useState<number | null>(null);
   const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>('mobile');
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
   const [editingStageTitle, setEditingStageTitle] = useState('');
@@ -310,6 +311,7 @@ export default function App() {
   }
 
   const celebrationTimeoutRef = useRef<number | null>(null);
+  const celebrationSliceTimeoutsRef = useRef<number[]>([]);
   const dailyStageSuccessCountRef = useRef<number>(0);
   const dailyOverallSuccessCountRef = useRef<number>(0);
   const lastOverallTodayRateRef = useRef<number>(0);
@@ -318,11 +320,39 @@ export default function App() {
   const perProjectStageCompleteTodayRef = useRef<Record<string, number>>({});
   const lastCalendarDateRef = useRef<string>(today);
 
-  function showCelebration(message: string, durationMs: number = 2400): void {
-    setCelebrationMessage(message);
-    if (celebrationTimeoutRef.current) window.clearTimeout(celebrationTimeoutRef.current);
-    celebrationTimeoutRef.current = window.setTimeout(() => setCelebrationMessage(null), durationMs);
+  function clearCelebrationTimers(): void {
+    if (celebrationTimeoutRef.current !== null) {
+      window.clearTimeout(celebrationTimeoutRef.current);
+      celebrationTimeoutRef.current = null;
+    }
+    for (const id of celebrationSliceTimeoutsRef.current) {
+      window.clearTimeout(id);
+    }
+    celebrationSliceTimeoutsRef.current = [];
   }
+
+  function dismissCelebration(): void {
+    clearCelebrationTimers();
+    setCelebrationMessage(null);
+    setCelebrationCountdown(null);
+  }
+
+  /** 2초 뒤 자동 닫힘, 메시지 아래 (2)→(1)→(0) 카운트다운 */
+  function showCelebration(message: string, durationMs: number = 2000): void {
+    clearCelebrationTimers();
+    setCelebrationMessage(message);
+    setCelebrationCountdown(2);
+    const slice = Math.max(200, durationMs / 3);
+    celebrationSliceTimeoutsRef.current.push(
+      window.setTimeout(() => setCelebrationCountdown(1), slice)
+    );
+    celebrationSliceTimeoutsRef.current.push(
+      window.setTimeout(() => setCelebrationCountdown(0), slice * 2)
+    );
+    celebrationTimeoutRef.current = window.setTimeout(() => dismissCelebration(), durationMs);
+  }
+
+  useEffect(() => () => clearCelebrationTimers(), []);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -468,11 +498,11 @@ export default function App() {
       perProjectStageCompleteTodayRef.current[projectId] = n;
       const level = Math.min(10, n);
       fireSuccess(level);
-      showCelebration(`축하해요! ${current.stageNumber}단계를 100% 달성했어요.`, 2400);
+      showCelebration(`축하해요! ${current.stageNumber}단계를 100% 달성했어요.`);
       track('stage_completed_100', { stage_number: current.stageNumber, celebration_level: level });
     } else if (addingTodayCheck && current) {
       fireTodayHabitCheck();
-      showCelebration('오늘 체크 완료!', 1400);
+      showCelebration('오늘 체크 완료!');
       track('stage_today_checked', { project_id: projectId });
     }
     track('stage_toggle_today');
@@ -502,7 +532,7 @@ export default function App() {
     });
     setNextStageTitle('');
     fireNextStageStart();
-    showCelebration('다음 단계가 시작됐어요!', 2200);
+    showCelebration('다음 단계가 시작됐어요!');
     track('stage_setup', { duration_days: durationDays });
   }
 
@@ -776,11 +806,37 @@ export default function App() {
       </section>
 
       {celebrationMessage && (
-        <section className="px-4 sm:px-6 lg:px-8 pb-2">
-          <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-emerald-700 text-sm font-medium">
-            {celebrationMessage}
+        <div
+          className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/45 backdrop-blur-[2px]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="celebration-dialog-title"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default"
+            aria-label="닫기"
+            onClick={() => dismissCelebration()}
+          />
+          <div
+            className="relative z-10 w-full max-w-sm rounded-2xl border-2 border-emerald-400 bg-white px-6 py-6 shadow-2xl shadow-emerald-900/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p id="celebration-dialog-title" className="text-center text-base sm:text-lg font-semibold text-emerald-800 leading-snug">
+              {celebrationMessage}
+            </p>
+            {celebrationCountdown !== null && (
+              <p
+                className="mt-4 text-center text-[11px] font-medium text-slate-400 tabular-nums tracking-[0.2em]"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                ({celebrationCountdown})
+              </p>
+            )}
+            <p className="mt-1 text-center text-[10px] text-slate-400">잠시 후 자동으로 닫혀요</p>
           </div>
-        </section>
+        </div>
       )}
       {shareCopied && (
         <section className="px-4 sm:px-6 lg:px-8 pb-2">
