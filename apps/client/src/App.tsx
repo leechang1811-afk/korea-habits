@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import BannerAd from './components/BannerAd';
 import { track } from './services/analytics';
 import { adsService } from './services/ads';
-import { fireSuccess } from './utils/confetti';
+import { fireNextStageStart, fireSuccess, fireTodayHabitCheck } from './utils/confetti';
 
 type Stage = {
   id: string;
@@ -81,6 +81,15 @@ function stageRateByConfiguredPeriod(stage: Stage, periodDays: number, today: st
 
 function isStageWindowToday(stage: Stage, today: string): boolean {
   return today >= stage.startDate && today <= stage.endDate;
+}
+
+/** 오늘 체크를 추가한 뒤 stageRate 기준 100%가 되는지 (단계 완료 직전) */
+function willReachFullStageAfterTodayCheck(stage: Stage, todayKey: string): boolean {
+  if (stage.completed || stage.needsSetup || !isStageWindowToday(stage, todayKey)) return false;
+  if (stage.checkDates.includes(todayKey)) return false;
+  const planned = daysInclusive(stage.startDate, stage.endDate);
+  const nextCount = stage.checkDates.length + 1;
+  return Math.min(100, Math.round((nextCount / planned) * 100)) >= 100;
 }
 
 function activeStage(project: HabitProject): Stage {
@@ -305,6 +314,9 @@ export default function App() {
   const dailyOverallSuccessCountRef = useRef<number>(0);
   const lastOverallTodayRateRef = useRef<number>(0);
   const didInitOverallCelebrationRef = useRef<boolean>(false);
+  /** 목표별 이번 날짜에 몇 번 단계 100%를 달성했는지 — 폭죽 강도(목표마다 따로) */
+  const perProjectStageCompleteTodayRef = useRef<Record<string, number>>({});
+  const lastCalendarDateRef = useRef<string>(today);
 
   function showCelebration(message: string, durationMs: number = 2400): void {
     setCelebrationMessage(message);
@@ -330,6 +342,16 @@ export default function App() {
   useEffect(() => {
     track('app_open', { projects: state.projects.length });
   }, [state.projects.length]);
+
+  useEffect(() => {
+    if (lastCalendarDateRef.current === today) return;
+    lastCalendarDateRef.current = today;
+    perProjectStageCompleteTodayRef.current = {};
+    dailyStageSuccessCountRef.current = 0;
+    dailyOverallSuccessCountRef.current = 0;
+    didInitOverallCelebrationRef.current = false;
+    lastOverallTodayRateRef.current = 0;
+  }, [today]);
 
   useEffect(() => {
     const detect = () => {
@@ -411,14 +433,14 @@ export default function App() {
   function toggleTodayOnActiveStage(projectId: string) {
     const targetProject = state.projects.find((project) => project.id === projectId);
     const current = targetProject ? activeStage(targetProject) : null;
-    const plannedDays = current ? daysInclusive(current.startDate, current.endDate) : 1;
-    const willCompleteStage = current
-      ? !current.checkDates.includes(today) &&
+    const addingTodayCheck = Boolean(
+      current &&
+        !current.checkDates.includes(today) &&
         !current.completed &&
         !current.needsSetup &&
-        isStageWindowToday(current, today) &&
-        Math.round(((current.checkDates.length + 1) / plannedDays) * 100) >= 100
-      : false;
+        isStageWindowToday(current, today)
+    );
+    const willCompleteStage = Boolean(current && willReachFullStageAfterTodayCheck(current, today));
 
     setState((prev) => {
       const projects = prev.projects.map((project) => {
@@ -442,10 +464,16 @@ export default function App() {
     });
     if (willCompleteStage && current) {
       dailyStageSuccessCountRef.current += 1;
-      const level = Math.min(10, dailyStageSuccessCountRef.current);
+      const n = (perProjectStageCompleteTodayRef.current[projectId] ?? 0) + 1;
+      perProjectStageCompleteTodayRef.current[projectId] = n;
+      const level = Math.min(10, n);
       fireSuccess(level);
       showCelebration(`축하해요! ${current.stageNumber}단계를 100% 달성했어요.`, 2400);
       track('stage_completed_100', { stage_number: current.stageNumber, celebration_level: level });
+    } else if (addingTodayCheck && current) {
+      fireTodayHabitCheck();
+      showCelebration('오늘 체크 완료!', 1400);
+      track('stage_today_checked', { project_id: projectId });
     }
     track('stage_toggle_today');
   }
@@ -473,6 +501,8 @@ export default function App() {
       return { ...prev, projects };
     });
     setNextStageTitle('');
+    fireNextStageStart();
+    showCelebration('다음 단계가 시작됐어요!', 2200);
     track('stage_setup', { duration_days: durationDays });
   }
 

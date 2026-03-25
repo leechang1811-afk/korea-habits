@@ -1,19 +1,82 @@
 /**
- * Dopamine-heavy confetti effects for game moments
+ * 습관 앱 폭죽 — 앱인토스 WebView에서도 보이도록 #confetti-root 고정 레이어에 그림
  */
 import confetti from 'canvas-confetti';
 
 const COLORS = ['#3182F6', '#EAB308', '#22C55E', '#EF4444', '#A855F7', '#EC4899', '#06B6D4'];
+const HABIT_GREEN = ['#059669', '#10B981', '#34D399', '#6EE7B7', '#EAB308', '#FDE047'];
+
+let cached: ((options?: confetti.Options) => Promise<null> | null) | null = null;
+
+function c(): typeof confetti {
+  if (typeof document === 'undefined') return confetti;
+  if (cached) return cached as unknown as typeof confetti;
+  const root = document.getElementById('confetti-root');
+  if (root instanceof HTMLCanvasElement) {
+    cached = confetti.create(root, { resize: true, useWorker: false });
+  } else {
+    cached = confetti as unknown as (options?: confetti.Options) => Promise<null> | null;
+  }
+  return cached as unknown as typeof confetti;
+}
+
+/** 오늘 하루 체크만 완료했을 때 (단계 100% 직전) */
+export function fireTodayHabitCheck(): void {
+  const fn = c();
+  fn({
+    particleCount: 42,
+    spread: 58,
+    origin: { y: 0.7, x: 0.5 },
+    colors: HABIT_GREEN,
+    scalar: 1.12,
+    ticks: 95,
+    startVelocity: 32,
+  });
+  fn({
+    particleCount: 22,
+    spread: 42,
+    origin: { y: 0.76, x: 0.38 },
+    angle: 55,
+    colors: HABIT_GREEN,
+    scalar: 1,
+    ticks: 80,
+  });
+  fn({
+    particleCount: 22,
+    spread: 42,
+    origin: { y: 0.76, x: 0.62 },
+    angle: 125,
+    colors: HABIT_GREEN,
+    scalar: 1,
+    ticks: 80,
+  });
+}
+
+/** 다음 단계 설정 후 새 단계가 열렸을 때 */
+export function fireNextStageStart(): void {
+  const fn = c();
+  fn({
+    particleCount: 55,
+    spread: 70,
+    origin: { x: 0.5, y: 0.55 },
+    colors: [...HABIT_GREEN, ...COLORS.slice(0, 3)],
+    scalar: 1.2,
+    ticks: 100,
+  });
+  fn({ particleCount: 30, angle: 60, spread: 65, origin: { x: 0 }, colors: COLORS, scalar: 1.1 });
+  fn({ particleCount: 30, angle: 120, spread: 65, origin: { x: 1 }, colors: COLORS, scalar: 1.1 });
+}
 
 export function fireSuccess(level: number = 1): void {
+  const fn = c();
   const base = 55;
   const levelBonus = Math.min(220, (level - 1) * 20);
   const count = base + levelBonus;
   const scaledCount = Math.floor(count * 1.5);
   const scalar = 1.3 + (level - 1) * 0.06;
-  confetti({ particleCount: scaledCount, angle: 60, spread: 75 + level * 3, origin: { x: 0 }, colors: COLORS, scalar });
-  confetti({ particleCount: scaledCount, angle: 120, spread: 75 + level * 3, origin: { x: 1 }, colors: COLORS, scalar });
-  confetti({
+  fn({ particleCount: scaledCount, angle: 60, spread: 75 + level * 3, origin: { x: 0 }, colors: COLORS, scalar });
+  fn({ particleCount: scaledCount, angle: 120, spread: 75 + level * 3, origin: { x: 1 }, colors: COLORS, scalar });
+  fn({
     particleCount: Math.floor(scaledCount * 0.85),
     spread: 105 + level * 2,
     origin: { x: 0.5, y: 0.45 },
@@ -23,22 +86,23 @@ export function fireSuccess(level: number = 1): void {
     ticks: 140,
   });
   if (level >= 3) {
-    confetti({ particleCount: Math.floor(scaledCount), spread: 120, origin: { y: 0.55 }, colors: COLORS, scalar });
+    fn({ particleCount: Math.floor(scaledCount), spread: 120, origin: { y: 0.55 }, colors: COLORS, scalar });
   }
   if (level >= 10) {
-    confetti({ particleCount: Math.floor(scaledCount * 0.8), spread: 125, origin: { x: 0.3, y: 0.3 }, colors: COLORS, scalar });
-    confetti({ particleCount: Math.floor(scaledCount * 0.8), spread: 125, origin: { x: 0.7, y: 0.3 }, colors: COLORS, scalar });
+    fn({ particleCount: Math.floor(scaledCount * 0.8), spread: 125, origin: { x: 0.3, y: 0.3 }, colors: COLORS, scalar });
+    fn({ particleCount: Math.floor(scaledCount * 0.8), spread: 125, origin: { x: 0.7, y: 0.3 }, colors: COLORS, scalar });
   }
   if (level >= 15) {
-    confetti({ particleCount: Math.floor(scaledCount * 0.75), spread: 150, origin: { x: 0.5, y: 0.1 }, colors: COLORS, scalar });
+    fn({ particleCount: Math.floor(scaledCount * 0.75), spread: 150, origin: { x: 0.5, y: 0.1 }, colors: COLORS, scalar });
   }
 }
 
 export function fireCombo(count: number, level: number = 1): void {
+  const fn = c();
   const levelBonus = Math.min(80, (level - 1) * 8);
   const particleCount = Math.min(120, 25 + count * 8 + levelBonus);
   const scalar = 1.2 + (level - 1) * 0.04;
-  confetti({
+  fn({
     particleCount,
     spread: 90 + level * 2,
     origin: { y: 0.6 },
@@ -51,13 +115,13 @@ export function fireCombo(count: number, level: number = 1): void {
 
 /** 20단계 올클리어 — 상위 0.1% 도파민 폭발 축포 */
 export function fireChampion(): void {
+  const fn = c();
   const duration = 5500;
   const end = Date.now() + duration;
   const championColors = ['#FBBF24', '#F59E0B', '#D97706', '#FCD34D', '#FDE68A', '#FEF3C7', '#FDE047'];
 
   const frame = () => {
-    // 좌우 폭발 (축포 느낌)
-    confetti({
+    fn({
       particleCount: 35,
       angle: 60,
       spread: 85,
@@ -67,7 +131,7 @@ export function fireChampion(): void {
       scalar: 2.2,
       gravity: 0.9,
     });
-    confetti({
+    fn({
       particleCount: 35,
       angle: 120,
       spread: 85,
@@ -77,8 +141,7 @@ export function fireChampion(): void {
       scalar: 2.2,
       gravity: 0.9,
     });
-    // 하단에서 위로 터지는 축포
-    confetti({
+    fn({
       particleCount: 45,
       spread: 140,
       origin: { x: 0.5, y: 0.75 },
@@ -87,8 +150,7 @@ export function fireChampion(): void {
       scalar: 1.8,
       startVelocity: 45,
     });
-    // 좌측 중앙
-    confetti({
+    fn({
       particleCount: 25,
       spread: 110,
       origin: { x: 0.2, y: 0.5 },
@@ -96,8 +158,7 @@ export function fireChampion(): void {
       ticks: 150,
       scalar: 1.6,
     });
-    // 우측 중앙
-    confetti({
+    fn({
       particleCount: 25,
       spread: 110,
       origin: { x: 0.8, y: 0.5 },
@@ -111,32 +172,36 @@ export function fireChampion(): void {
 }
 
 export function fireNewBest(): void {
-  confetti({ particleCount: 80, spread: 120, origin: { y: 0.5 }, colors: COLORS, scalar: 1.2 });
-  confetti({ particleCount: 50, spread: 100, origin: { x: 0.2, y: 0.5 }, angle: 60, colors: COLORS });
-  confetti({ particleCount: 50, spread: 100, origin: { x: 0.8, y: 0.5 }, angle: 120, colors: COLORS });
+  const fn = c();
+  fn({ particleCount: 80, spread: 120, origin: { y: 0.5 }, colors: COLORS, scalar: 1.2 });
+  fn({ particleCount: 50, spread: 100, origin: { x: 0.2, y: 0.5 }, angle: 60, colors: COLORS });
+  fn({ particleCount: 50, spread: 100, origin: { x: 0.8, y: 0.5 }, angle: 120, colors: COLORS });
 }
 
 /** 누적 점수 추가 시 팡팡 터지는 소규모 burst */
 export function fireScoreBurst(): void {
+  const fn = c();
   const burstColors = ['#EAB308', '#F59E0B', '#22C55E', '#3182F6'];
-  confetti({ particleCount: 18, spread: 55, origin: { x: 0.85, y: 0.12 }, colors: burstColors, scalar: 1.1, ticks: 100 });
-  confetti({ particleCount: 12, spread: 45, origin: { x: 0.9, y: 0.15 }, angle: 90, colors: burstColors, scalar: 0.9, ticks: 80 });
+  fn({ particleCount: 18, spread: 55, origin: { x: 0.85, y: 0.12 }, colors: burstColors, scalar: 1.1, ticks: 100 });
+  fn({ particleCount: 12, spread: 45, origin: { x: 0.9, y: 0.15 }, angle: 90, colors: burstColors, scalar: 0.9, ticks: 80 });
 }
 
 /** 보너스 점수 빵빵 터지는 골드 burst */
 export function fireBonusBurst(): void {
+  const fn = c();
   const goldColors = ['#FBBF24', '#F59E0B', '#FCD34D', '#FDE68A', '#EAB308'];
-  confetti({ particleCount: 35, spread: 70, origin: { x: 0.85, y: 0.1 }, colors: goldColors, scalar: 1.4, ticks: 120 });
-  confetti({ particleCount: 25, spread: 60, origin: { x: 0.88, y: 0.08 }, angle: 90, colors: goldColors, scalar: 1.2, ticks: 100 });
-  confetti({ particleCount: 20, spread: 80, origin: { x: 0.82, y: 0.12 }, colors: goldColors, scalar: 1.0, ticks: 90 });
+  fn({ particleCount: 35, spread: 70, origin: { x: 0.85, y: 0.1 }, colors: goldColors, scalar: 1.4, ticks: 120 });
+  fn({ particleCount: 25, spread: 60, origin: { x: 0.88, y: 0.08 }, angle: 90, colors: goldColors, scalar: 1.2, ticks: 100 });
+  fn({ particleCount: 20, spread: 80, origin: { x: 0.82, y: 0.12 }, colors: goldColors, scalar: 1.0, ticks: 90 });
 }
 
 /** 마일스톤(5/10/15단계) 달성 시 도파민 burst */
 export function fireMilestoneBurst(level: number): void {
+  const fn = c();
   const intensity = level >= 15 ? 1.5 : level >= 10 ? 1.2 : 1;
   const count = Math.floor(40 * intensity);
   const spread = 100 + level * 2;
-  confetti({ particleCount: count, spread, origin: { x: 0.5, y: 0.5 }, colors: COLORS, scalar: 1.3, ticks: 100 });
-  confetti({ particleCount: Math.floor(count * 0.7), spread: spread + 20, origin: { x: 0.3, y: 0.4 }, colors: COLORS, scalar: 1.1 });
-  confetti({ particleCount: Math.floor(count * 0.7), spread: spread + 20, origin: { x: 0.7, y: 0.4 }, colors: COLORS, scalar: 1.1 });
+  fn({ particleCount: count, spread, origin: { x: 0.5, y: 0.5 }, colors: COLORS, scalar: 1.3, ticks: 100 });
+  fn({ particleCount: Math.floor(count * 0.7), spread: spread + 20, origin: { x: 0.3, y: 0.4 }, colors: COLORS, scalar: 1.1 });
+  fn({ particleCount: Math.floor(count * 0.7), spread: spread + 20, origin: { x: 0.7, y: 0.4 }, colors: COLORS, scalar: 1.1 });
 }
