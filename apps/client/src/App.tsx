@@ -112,6 +112,15 @@ function activeStage(project: HabitProject): Stage {
   return next ?? project.stages[project.stages.length - 1];
 }
 
+/** 전 단계를 오늘까지 체크해 완료한 뒤, 새 단계(설정 대기)로 넘어온 경우에도 '오늘 완료'로 표시 */
+function effectivelyCompletedToday(project: HabitProject, current: Stage, todayKey: string): boolean {
+  if (current.checkDates.includes(todayKey)) return true;
+  if (!current.needsSetup || current.stageNumber < 2) return false;
+  const prev = project.stages.find((s) => s.stageNumber === current.stageNumber - 1);
+  if (!prev?.completed) return false;
+  return prev.checkDates.includes(todayKey);
+}
+
 function safeLoadState(): AppState {
   if (typeof window === 'undefined') return { projects: [] };
   try {
@@ -1089,21 +1098,22 @@ export default function App() {
               {(() => {
                 const current = activeStage(selectedProject);
                 const canCheckToday = isStageWindowToday(current, today) && !current.completed && !current.needsSetup;
+                const doneTodayUi = effectivelyCompletedToday(selectedProject, current, today);
                 return (
                   <div className="rounded-xl border border-toss-border bg-white p-3 sm:p-4">
                     <button
                       type="button"
                       className={`w-full rounded-xl border-2 py-3 font-medium ${
-                        current.checkDates.includes(today)
+                        doneTodayUi
                           ? 'border-emerald-500 bg-emerald-500 text-white'
                           : 'border-emerald-300 bg-slate-100 text-slate-700'
-                      } ${canCheckToday ? '' : 'border-emerald-300 opacity-60'}`}
+                      } ${canCheckToday || doneTodayUi ? '' : 'border-emerald-300 opacity-60'}`}
                       onClick={() => toggleTodayOnActiveStage(selectedProject.id)}
                       disabled={!canCheckToday}
                     >
-                      {current.checkDates.includes(today) ? '오늘 완료했어요' : checkButtonLabel}
+                      {doneTodayUi ? '오늘 완료했어요' : checkButtonLabel}
                     </button>
-                    {!canCheckToday && (
+                    {!canCheckToday && !doneTodayUi && (
                       <p className="mt-2 text-center text-xs text-slate-500">
                         이 단계를 설정한 뒤에 오늘 체크를 할 수 있어요.
                       </p>
@@ -1174,9 +1184,32 @@ export default function App() {
                   const currentRate = stageRate(current);
                   return (
                     <>
-                      <p className="text-sm font-semibold text-slate-800">
-                        {current.startDate} ~ {current.endDate} · 달성률 {currentRate}%
-                      </p>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                        <p className="shrink-0 text-sm font-semibold text-slate-800">
+                          {current.startDate} ~ {current.endDate}
+                        </p>
+                        <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:min-w-[200px]">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="relative h-3 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-200"
+                              role="progressbar"
+                              aria-valuenow={currentRate}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-label={`현재 단계 달성률 ${currentRate}%`}
+                            >
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-[width] duration-500 ease-out"
+                                style={{ width: `${currentRate}%` }}
+                              />
+                            </div>
+                            <span className="w-12 shrink-0 text-right text-sm font-bold tabular-nums text-toss-blue">
+                              {currentRate}%
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-toss-sub sm:text-right">현재 단계 달성률</p>
+                        </div>
+                      </div>
                       {current.needsSetup && (
                         <form
                           className="mt-3 rounded-lg border border-slate-200 p-3 space-y-2"
