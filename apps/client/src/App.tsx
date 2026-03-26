@@ -1110,8 +1110,10 @@ export default function App() {
                       {doneTodayUi ? '오늘 완료했어요' : checkButtonLabel}
                     </button>
                     {!canCheckToday && !doneTodayUi && (
-                      <p className="mt-2 text-center text-xs text-slate-500">
-                        이 단계를 설정한 뒤에 오늘 체크를 할 수 있어요.
+                      <p className="mt-2 text-center text-xs leading-relaxed text-slate-500">
+                        {current.needsSetup
+                          ? '다음 단계는 설정을 마치면 내일부터 시작돼요. 내일부터 여기서 하루 체크를 이어가실 수 있어요.'
+                          : '이 단계 기간 안에서만 오늘 체크를 할 수 있어요.'}
                       </p>
                     )}
                   </div>
@@ -1208,7 +1210,9 @@ export default function App() {
                       </div>
                       {current.needsSetup && (
                         <form
-                          className="mt-3 rounded-lg border border-slate-200 p-3 space-y-2"
+                          className={`mt-3 space-y-2 rounded-xl border-2 bg-white p-3 ${
+                            displayTodayRate === 100 ? 'border-emerald-500' : 'border-emerald-300'
+                          }`}
                           onSubmit={(event) => {
                             event.preventDefault();
                             setupActiveStage(selectedProject.id, nextStageTitle, nextStageDays);
