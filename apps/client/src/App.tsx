@@ -32,6 +32,20 @@ const STORAGE_KEY = 'korea-habit-projects-v2';
 const GOALS_PER_PAGE = 5;
 const PRESET_TITLES = ['물 2L 마시기', '10분 독서', '15분 걷기'];
 
+/** 홈 달성률 카드 옆에 표시 — 앱을 열 때마다 하나 무작위 */
+const HABIT_CHEER_MESSAGES = [
+  '오늘도 한 걸음씩, 당신의 페이스가 가장 예뻐요.',
+  '꾸준함은 재능을 이겨요. 지금 이 순간도 충분히 멋져요.',
+  '완벽하지 않아도 괜찮아요. 와 준 그 마음이 이미 빛나요.',
+  '작은 실천이 쌓이면, 어느새 습관이 되고 인생이 바뀌어요.',
+  '당신이 자신을 응원해 줄 때, 세상도 함께 응원해요.',
+  '오늘의 나를 칭찬해 주세요. 그게 내일의 힘이 돼요.',
+  '느려도 좋아요. 멈지만 않는다면 언젠가 꼭 도착해요.',
+  '지금까지 온 길, 정말 수고 많았어요. 앞으로도 화이팅!',
+  '습관은 선물이에요. 미래의 나에게 보내는 따뜻한 편지 같아요.',
+  '포기하지 않은 하루하루가, 가장 값진 성공이에요.',
+];
+
 function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -527,11 +541,17 @@ export default function App() {
       perProjectStageCompleteTodayRef.current[projectId] = n;
       const level = Math.min(10, n);
       fireSuccess(level);
-      showCelebration(`축하해요! ${current.stageNumber}단계를 100% 달성했어요.`);
+      showCelebration(
+        `${current.stageNumber}단계를 끝까지 지켜내다니, 정말 대단해요. 당신의 꾸준함이 빛나는 순간이에요. 앞으로의 여정도 응원할게요, 화이팅!`,
+        3600
+      );
       track('stage_completed_100', { stage_number: current.stageNumber, celebration_level: level });
     } else if (addingTodayCheck && current) {
       fireTodayHabitCheck();
-      showCelebration('오늘 체크 완료!');
+      showCelebration(
+        '오늘도 약속을 지키셨네요. 작은 승리가 모여 큰 변화가 돼요. 당신을 진심으로 응원해요, 오늘도 수고 많았어요!',
+        3600
+      );
       track('stage_today_checked', { project_id: projectId });
     }
     track('stage_toggle_today');
@@ -561,7 +581,10 @@ export default function App() {
     });
     setNextStageTitle('');
     fireNextStageStart();
-    showCelebration('다음 단계가 시작됐어요!');
+    showCelebration(
+      '새로운 도전의 문이 열렸어요. 지금까지 쌓아 온 힘이 다음 길도 밝혀 줄 거예요. 믿고 또 한 걸음, 화이팅!',
+      3600
+    );
     track('stage_setup', { duration_days: durationDays });
   }
 
@@ -629,6 +652,10 @@ export default function App() {
   }, [state.projects, today]);
   const displayTodayRate = overallTodayRate;
   const displayTodayProjectRows = todayProjectStatus;
+  const habitCheerLine = useMemo(
+    () => HABIT_CHEER_MESSAGES[Math.floor(Math.random() * HABIT_CHEER_MESSAGES.length)] ?? '',
+    []
+  );
 
   useEffect(() => {
     if (state.projects.length === 0) return;
@@ -645,7 +672,10 @@ export default function App() {
         dailyStageSuccessCountRef.current + dailyOverallSuccessCountRef.current + 1
       );
       fireSuccess(level);
-      showCelebration('오늘 하루 100% 달성했어요!');
+      showCelebration(
+        '오늘 모든 목표에 불을 켜 주셨네요! 하루를 온전히 살아낸 당신에게 박수를 보내요. 내일도 이 마음 그대로, 화이팅!',
+        3600
+      );
       track('overall_today_completed_100', { level });
     }
 
@@ -758,9 +788,15 @@ export default function App() {
         <>
           <section className="px-4 pb-4 sm:px-6 lg:px-8">
             <div className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">나의 습관형성 달성률</p>
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1 pr-2">
+                  <p className="text-sm font-semibold">나의 습관형성 달성률</p>
+                  <p className="mt-1 text-xs font-medium leading-snug text-emerald-700">
+                    <span className="text-slate-400">— </span>
+                    {habitCheerLine}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2 self-end sm:self-start">
                   <button
                     type="button"
                     className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700"
