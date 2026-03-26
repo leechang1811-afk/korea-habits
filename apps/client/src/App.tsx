@@ -3,6 +3,7 @@ import BannerAd from './components/BannerAd';
 import { track } from './services/analytics';
 import { adsService } from './services/ads';
 import { fireNextStageStart, fireSuccess, fireTodayHabitCheck } from './utils/confetti';
+import { readScreenshotInit } from './screenshotFixtures';
 
 type Stage = {
   id: string;
@@ -307,10 +308,45 @@ function rebalanceProjectAfterStageEdit(project: HabitProject, stageId: string, 
   return { ...project, stages: normalized };
 }
 
+type ShotInitRef = {
+  shot: string | null;
+  state: AppState;
+  view: 'create' | 'list';
+  selected: string | null;
+  celebration?: string;
+};
+
+const shotInitSingleton: { current: ShotInitRef | null } = { current: null };
+
+function resolveShotInitOnce(): ShotInitRef {
+  if (shotInitSingleton.current) return shotInitSingleton.current;
+  const init = readScreenshotInit();
+  if (init) {
+    shotInitSingleton.current = {
+      shot: init.shot,
+      state: { projects: init.bootstrap.state.projects as HabitProject[] },
+      view: init.bootstrap.view,
+      selected: init.bootstrap.selectedProjectId,
+      celebration: init.bootstrap.celebrationMessage,
+    };
+  } else {
+    shotInitSingleton.current = {
+      shot: null,
+      state: safeLoadState(),
+      view: 'create',
+      selected: null,
+    };
+  }
+  return shotInitSingleton.current;
+}
+
 export default function App() {
-  const [state, setState] = useState<AppState>(() => safeLoadState());
-  const [view, setView] = useState<'create' | 'list'>('create');
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const shotInit = resolveShotInitOnce();
+  const screenshotShotKey = shotInit.shot;
+
+  const [state, setState] = useState<AppState>(() => shotInit.state);
+  const [view, setView] = useState<'create' | 'list'>(() => shotInit.view);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => shotInit.selected);
   const [goalPage, setGoalPage] = useState(0);
   const [projectName, setProjectName] = useState('');
   const [firstStageTitle, setFirstStageTitle] = useState('');
@@ -380,6 +416,17 @@ export default function App() {
 
   useEffect(() => () => clearCelebrationTimers(), []);
 
+  const screenshotCelebrationShownRef = useRef(false);
+  useEffect(() => {
+    if (!screenshotShotKey || screenshotCelebrationShownRef.current) return;
+    const msg = shotInit.celebration;
+    if (!msg) return;
+    screenshotCelebrationShownRef.current = true;
+    const t = window.setTimeout(() => showCelebration(msg, 60000), 500);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 캡처 1회만
+  }, [screenshotShotKey]);
+
   useEffect(() => {
     if (view !== 'create' || !createOpenedViaNewGoalButtonRef.current) return;
     createOpenedViaNewGoalButtonRef.current = false;
@@ -394,10 +441,12 @@ export default function App() {
   }, [view]);
 
   useEffect(() => {
+    if (screenshotShotKey) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+  }, [state, screenshotShotKey]);
 
   useEffect(() => {
+    if (screenshotShotKey) return;
     if (state.projects.length === 0) {
       setView('create');
       return;
@@ -406,7 +455,7 @@ export default function App() {
       setSelectedProjectId(state.projects[0].id);
       setView('list');
     }
-  }, [selectedProjectId, state.projects]);
+  }, [screenshotShotKey, selectedProjectId, state.projects]);
 
   useEffect(() => {
     track('app_open', { projects: state.projects.length });
@@ -1374,7 +1423,7 @@ export default function App() {
         </>
       )}
 
-      <BannerAd />
+      {!screenshotShotKey && <BannerAd />}
     </main>
   );
 }
