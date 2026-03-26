@@ -197,7 +197,36 @@ const FIXTURES: Record<string, ScreenshotBootstrap> = {
     },
     view: 'list',
     selectedProjectId: 'shot-c1',
-    celebrationMessage: '2단계 완주, 정말 멋져요.\n꾸준함이 빛났어요.\n앞으로도 화이팅!',
+    celebrationMessage: '1단계 완주, 정말 멋져요.\n꾸준함이 빛났어요.\n앞으로도 화이팅!',
+  },
+  /** 스토어용: 오늘 완료 체크 축하 멘트 */
+  'celebration-today': {
+    state: {
+      projects: [
+        {
+          id: 'shot-c2',
+          name: '아침 루틴',
+          createdAt: new Date().toISOString(),
+          stageDurationDays: 7,
+          stages: [
+            {
+              id: 'shot-c2-s1',
+              stageNumber: 1,
+              title: '물 한 잔',
+              startDate: addDaysKey(today, -2),
+              endDate: addDaysKey(today, 4),
+              checkDates: [today],
+              completed: false,
+              needsSetup: false,
+              failed: false,
+            },
+          ],
+        },
+      ],
+    },
+    view: 'list',
+    selectedProjectId: 'shot-c2',
+    celebrationMessage: '오늘도 약속 지키셨네요.\n작은 승리가 쌓여요.\n응원할게요!',
   },
   'next-stage-setup': {
     state: {
@@ -258,4 +287,5 @@ export const SCREENSHOT_CAPTURES: { shot: string; filename: string }[] = [
   { shot: 'project-detail', filename: 'screenshot-03-project-detail-636x1048.png' },
   { shot: 'celebration', filename: 'screenshot-04-celebration-636x1048.png' },
   { shot: 'next-stage-setup', filename: 'screenshot-05-next-stage-setup-636x1048.png' },
+  { shot: 'celebration-today', filename: 'screenshot-06-celebration-message-636x1048.png' },
 ];

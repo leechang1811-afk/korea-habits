@@ -416,15 +416,17 @@ export default function App() {
 
   useEffect(() => () => clearCelebrationTimers(), []);
 
-  const screenshotCelebrationShownRef = useRef(false);
   useEffect(() => {
-    if (!screenshotShotKey || screenshotCelebrationShownRef.current) return;
-    const msg = shotInit.celebration;
-    if (!msg) return;
-    screenshotCelebrationShownRef.current = true;
-    const t = window.setTimeout(() => showCelebration(msg, 60000), 500);
-    return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 캡처 1회만
+    if (!screenshotShotKey || !shotInit.celebration) return;
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      if (!cancelled) showCelebration(shotInit.celebration!, 60000);
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 스크린샷 픽스처 표시
   }, [screenshotShotKey]);
 
   useEffect(() => {

@@ -26,6 +26,7 @@ const CAPTURES = [
   { shot: 'project-detail', filename: 'screenshot-03-project-detail-636x1048.png', scroll: 'detail' },
   { shot: 'celebration', filename: 'screenshot-04-celebration-636x1048.png', scroll: 'top' },
   { shot: 'next-stage-setup', filename: 'screenshot-05-next-stage-setup-636x1048.png', scroll: 'detail' },
+  { shot: 'celebration-today', filename: 'screenshot-06-celebration-message-636x1048.png', scroll: 'top' },
 ];
 
 function waitForServer(url, timeoutMs = 90000) {
@@ -65,6 +66,12 @@ async function applyScroll(page, scroll) {
   }
 }
 
+async function waitForCelebrationDialog(page) {
+  await page.waitForSelector('[role="dialog"]', { timeout: 15000 });
+  await page.waitForSelector('#celebration-dialog-title', { timeout: 5000 });
+  await new Promise((r) => setTimeout(r, 350));
+}
+
 async function main() {
   await fs.mkdir(outDir, { recursive: true });
 
@@ -97,9 +104,14 @@ async function main() {
       const url = `${BASE}/?shot=${encodeURIComponent(shot)}`;
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
       await page.waitForSelector('main', { timeout: 30000 });
-      await new Promise((r) => setTimeout(r, shot === 'celebration' ? 1400 : 900));
+      const isCelebrationShot = shot === 'celebration' || shot === 'celebration-today';
+      await new Promise((r) => setTimeout(r, isCelebrationShot ? 600 : 900));
       await applyScroll(page, scroll);
-      await new Promise((r) => setTimeout(r, 200));
+      if (isCelebrationShot) {
+        await waitForCelebrationDialog(page);
+      } else {
+        await new Promise((r) => setTimeout(r, 200));
+      }
       const outPath = path.join(outDir, filename);
       await page.screenshot({ path: outPath, type: 'png' });
       console.log('saved', outPath);
