@@ -551,13 +551,13 @@ export default function App() {
       const level = Math.min(10, n);
       fireSuccess(level);
       showCelebration(
-        `${current.stageNumber}단계 완주, 정말 멋져요. 꾸준함이 빛났어요. 앞으로도 화이팅!`,
+        `${current.stageNumber}단계 완주, 정말 멋져요.\n꾸준함이 빛났어요.\n앞으로도 화이팅!`,
         2800
       );
       track('stage_completed_100', { stage_number: current.stageNumber, celebration_level: level });
     } else if (addingTodayCheck && current) {
       fireTodayHabitCheck();
-      showCelebration('오늘도 약속 지키셨네요. 작은 승리가 쌓여요. 응원할게요!', 2800);
+      showCelebration('오늘도 약속 지키셨네요.\n작은 승리가 쌓여요.\n응원할게요!', 2800);
       track('stage_today_checked', { project_id: projectId });
     }
     track('stage_toggle_today');
@@ -587,7 +587,7 @@ export default function App() {
     });
     setNextStageTitle('');
     fireNextStageStart();
-    showCelebration('새 도전이 시작됐어요. 지금까지 온 힘으로 한 걸음 더, 화이팅!', 2800);
+    showCelebration('새 도전이 시작됐어요.\n지금까지 온 힘으로 한 걸음 더,\n화이팅!', 2800);
     track('stage_setup', { duration_days: durationDays });
   }
 
@@ -675,7 +675,7 @@ export default function App() {
         dailyStageSuccessCountRef.current + dailyOverallSuccessCountRef.current + 1
       );
       fireSuccess(level);
-      showCelebration('오늘 목표를 모두 채웠어요! 대단해요. 내일도 화이팅!', 2800);
+      showCelebration('오늘 목표를 모두 채웠어요!\n대단해요.\n내일도 화이팅!', 2800);
       track('overall_today_completed_100', { level });
     }
 
@@ -902,7 +902,7 @@ export default function App() {
           >
             <p
               id="celebration-dialog-title"
-              className="w-full text-balance text-base font-semibold leading-relaxed text-emerald-800 sm:text-lg"
+              className="w-full whitespace-pre-line text-balance text-base font-semibold leading-relaxed text-emerald-800 sm:text-lg"
             >
               {celebrationMessage}
             </p>
@@ -1113,7 +1113,7 @@ export default function App() {
                       <p className="mt-2 text-center text-xs leading-relaxed text-slate-500">
                         {current.needsSetup
                           ? '다음 단계는 설정을 마치면 내일부터 시작돼요. 내일부터 여기서 하루 체크를 이어가실 수 있어요.'
-                          : '이 단계 기간 안에서만 오늘 체크를 할 수 있어요.'}
+                          : '다음 단계로 이동하여 내일부터 다시 오늘 완료하기 체크를 할 수 있어요.'}
                       </p>
                     )}
                   </div>
