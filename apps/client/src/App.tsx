@@ -29,6 +29,7 @@ type AppState = {
 };
 
 const STORAGE_KEY = 'korea-habit-projects-v2';
+const GOALS_PER_PAGE = 5;
 const PRESET_TITLES = ['물 2L 마시기', '10분 독서', '15분 걷기'];
 
 function makeId(): string {
@@ -285,8 +286,9 @@ function rebalanceProjectAfterStageEdit(project: HabitProject, stageId: string, 
 
 export default function App() {
   const [state, setState] = useState<AppState>(() => safeLoadState());
-  const [view, setView] = useState<'create' | 'list' | 'detail'>('create');
+  const [view, setView] = useState<'create' | 'list'>('create');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [goalPage, setGoalPage] = useState(0);
   const [projectName, setProjectName] = useState('');
   const [firstStageTitle, setFirstStageTitle] = useState('');
   const [stageDays, setStageDays] = useState(7);
@@ -386,6 +388,19 @@ export default function App() {
   useEffect(() => {
     track('app_open', { projects: state.projects.length });
   }, [state.projects.length]);
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(state.projects.length / GOALS_PER_PAGE) - 1);
+    setGoalPage((p) => Math.min(Math.max(0, p), maxPage));
+  }, [state.projects.length]);
+
+  useEffect(() => {
+    if (!selectedProjectId) return;
+    const idx = state.projects.findIndex((p) => p.id === selectedProjectId);
+    if (idx < 0) return;
+    setGoalPage(Math.floor(idx / GOALS_PER_PAGE));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- goal page follows selection, not every project edit
+  }, [selectedProjectId]);
 
   useEffect(() => {
     if (lastCalendarDateRef.current === today) return;
@@ -612,19 +627,8 @@ export default function App() {
       };
     });
   }, [state.projects, today]);
-  const selectedProjectTodayRate = useMemo(() => {
-    if (!selectedProject) return 0;
-    const doneToday = selectedProject.stages.some((stage) => stage.checkDates.includes(today));
-    return doneToday ? 100 : 0;
-  }, [selectedProject, today]);
-  const displayTodayRate =
-    view === 'detail' && selectedProject ? selectedProjectTodayRate : overallTodayRate;
-  const displayTodayProjectRows = useMemo(() => {
-    if (view === 'detail' && selectedProject) {
-      return todayProjectStatus.filter((row) => row.projectId === selectedProject.id);
-    }
-    return todayProjectStatus;
-  }, [view, selectedProject, todayProjectStatus]);
+  const displayTodayRate = overallTodayRate;
+  const displayTodayProjectRows = todayProjectStatus;
 
   useEffect(() => {
     if (state.projects.length === 0) return;
@@ -647,10 +651,6 @@ export default function App() {
 
     lastOverallTodayRateRef.current = overallTodayRate;
   }, [overallTodayRate, state.projects.length, todayProjectStatus.length]);
-  const selectedProjectRate = useMemo(() => {
-    if (!selectedProject) return 0;
-    return stageRate(activeStage(selectedProject));
-  }, [selectedProject]);
   const selectedProjectConfiguredRate = useMemo(() => {
     if (!selectedProject) return 0;
     return stageRateByConfiguredPeriod(activeStage(selectedProject), selectedProject.stageDurationDays, today);
@@ -662,11 +662,11 @@ export default function App() {
     }, 0);
     return Math.round(sum / state.projects.length);
   }, [state.projects]);
-  const dashboardRate = view === 'detail' && selectedProject ? selectedProjectRate : overallProjectProgressRate;
+  const dashboardRate = overallProjectProgressRate;
   const displayRate = Math.min(94, Math.max(6, dashboardRate));
-  const stairHeights = [14, 24, 38, 54, 72, 92, 114];
+  const stairHeights = [13, 22, 34, 49, 65, 83, 103];
   const stepIndex = Math.round((dashboardRate / 100) * (stairHeights.length - 1));
-  const climberBottom = stairHeights[Math.max(0, Math.min(stepIndex, stairHeights.length - 1))] + 18;
+  const climberBottom = stairHeights[Math.max(0, Math.min(stepIndex, stairHeights.length - 1))] + 16;
   const checkButtonLabel = deviceType === 'mobile' ? '오늘 완료 체크하기' : '오늘 완료하기';
   const climberIcon = dashboardRate <= 0 ? '🚶‍➡️' : '🏃‍➡️';
   const selectedProjectDateStageMap = useMemo(() => {
@@ -679,6 +679,11 @@ export default function App() {
     }
     return map;
   }, [selectedProject]);
+
+  const goalPageMax = Math.max(0, Math.ceil(state.projects.length / GOALS_PER_PAGE) - 1);
+  const goalPageStart = goalPage * GOALS_PER_PAGE;
+  const goalsOnPage = state.projects.slice(goalPageStart, goalPageStart + GOALS_PER_PAGE);
+  const showGoalNavArrows = state.projects.length > GOALS_PER_PAGE;
 
   function startEditStage(stage: Stage) {
     setEditingStageId(stage.id);
@@ -702,66 +707,43 @@ export default function App() {
 
   return (
     <main className="mx-auto w-full max-w-5xl min-h-[100dvh] bg-slate-50 text-toss-text">
-      <section className="px-4 sm:px-6 lg:px-8 pt-7 sm:pt-8 pb-2 text-center">
-        <p className="text-sm font-semibold text-emerald-700">좋은 습관 만들기</p>
-        {view === 'detail' && selectedProject ? (
-          <>
-            <p className="text-sm font-semibold text-emerald-700 mt-1 leading-snug">
-              {activeStage(selectedProject).stageNumber}단계
-            </p>
-            <p className="text-base sm:text-lg font-semibold text-slate-800 mt-2 leading-snug">
-              목표 : {selectedProject.name} -{' '}
-              {(() => {
-                const st = activeStage(selectedProject);
-                if (st.title?.trim()) return st.title.trim();
-                if (st.needsSetup) return '다음 단계 설정';
-                return '—';
-              })()}
-            </p>
-          </>
+      <header className="sticky top-0 z-40 border-b border-toss-border bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto flex h-12 max-w-5xl items-center gap-2.5 px-4 sm:px-6 lg:px-8">
+          <img
+            src="/app-brand-logo.png"
+            alt="좋은 습관 만들기"
+            className="h-9 w-9 shrink-0 rounded-lg object-cover"
+            width={36}
+            height={36}
+          />
+          <span className="text-sm font-semibold text-slate-800">좋은 습관 만들기</span>
+        </div>
+      </header>
+
+      <section className="px-4 pb-2 pt-5 text-center sm:px-6 sm:pt-6 lg:px-8">
+        {view === 'create' ? (
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">새 목표 만들기</h1>
         ) : (
-          <h1 className="text-2xl font-bold mt-1 text-slate-900">나의 홈화면</h1>
+          <h1 className="text-2xl font-bold text-slate-900">나의 홈화면</h1>
         )}
-        <p className="text-sm text-toss-sub mt-2">
-          하루 체크로 습관을 쌓아요.
-          <br />
-        </p>
+        <p className="mt-2 text-sm text-toss-sub">하루 체크로 습관을 쌓아요.</p>
       </section>
 
       {view !== 'create' && (
-        <section className="px-4 sm:px-6 lg:px-8 pb-3 flex items-center gap-2 overflow-x-auto text-left">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className={`rounded-lg px-3 py-2 text-sm whitespace-nowrap ${
-                view === 'list' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'
-              }`}
-              onClick={() => {
-                setView('list');
-                scrollToTop();
-              }}
-            >
-              나의 전체 목표
-            </button>
-            <button
-              type="button"
-              className={`rounded-lg px-3 py-2 text-sm whitespace-nowrap ${
-                view === 'detail' ? 'bg-toss-blue text-white' : 'bg-white border border-toss-border'
-              }`}
-              onClick={() => {
-                setView('detail');
-                scrollToTop();
-              }}
-              disabled={!selectedProject}
-            >
-              <span className="block max-w-[240px] truncate">
-                {view === 'detail' && selectedProject ? `목표 상세(${selectedProject.name})` : '목표 상세'}
-              </span>
-            </button>
-          </div>
+        <section className="flex items-center gap-2 overflow-x-auto px-4 pb-3 text-left sm:px-6 lg:px-8">
           <button
             type="button"
-            className="rounded-lg px-3 py-2 text-sm bg-white border border-toss-border ml-auto whitespace-nowrap"
+            className="whitespace-nowrap rounded-lg bg-toss-blue px-3 py-2 text-sm text-white"
+            onClick={() => {
+              setView('list');
+              scrollToTop();
+            }}
+          >
+            나의 전체 목표
+          </button>
+          <button
+            type="button"
+            className="ml-auto whitespace-nowrap rounded-lg border border-toss-border bg-white px-3 py-2 text-sm"
             onClick={() => {
               createOpenedViaNewGoalButtonRef.current = true;
               setView('create');
@@ -772,128 +754,94 @@ export default function App() {
         </section>
       )}
 
-      {view === 'detail' && selectedProject && (
-        <section className="px-4 sm:px-6 lg:px-8 pb-3">
-          {(() => {
-            const current = activeStage(selectedProject);
-            const canCheckToday = isStageWindowToday(current, today) && !current.completed && !current.needsSetup;
-            return (
-              <div className="rounded-xl border border-toss-border bg-white p-3 sm:p-4">
-                <button
-                  type="button"
-                  className={`w-full rounded-xl py-3 font-medium border-2 ${
-                    current.checkDates.includes(today)
-                      ? 'bg-emerald-500 text-white border-emerald-500'
-                      : 'bg-slate-100 text-slate-700 border-emerald-300'
-                  } ${canCheckToday ? '' : 'opacity-60 border-emerald-300'}`}
-                  onClick={() => toggleTodayOnActiveStage(selectedProject.id)}
-                  disabled={!canCheckToday}
-                >
-                  {current.checkDates.includes(today) ? '오늘 완료했어요' : checkButtonLabel}
-                </button>
-                {!canCheckToday && (
-                  <p className="text-xs text-slate-500 mt-2 text-center">
-                    이 단계를 설정한 뒤에 오늘 체크를 할 수 있어요.
-                  </p>
-                )}
+      {view === 'list' && (
+        <>
+          <section className="px-4 pb-4 sm:px-6 lg:px-8">
+            <div className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">나의 습관형성 달성률</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700"
+                    onClick={() => {
+                      void copyShareLink();
+                    }}
+                  >
+                    내 성공률 공유하기
+                  </button>
+                  <p className="text-lg font-bold text-toss-blue">{dashboardRate}%</p>
+                </div>
               </div>
-            );
-          })()}
-        </section>
-      )}
-
-      <section className="px-4 sm:px-6 lg:px-8 pb-4">
-        <div className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">나의 습관형성 달성률</p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="text-xs border border-slate-300 rounded-md px-2 py-1 text-slate-700"
-                onClick={() => {
-                  void copyShareLink();
-                }}
-              >
-                내 성공률 공유하기
-              </button>
-              <p className="text-lg font-bold text-toss-blue">{dashboardRate}%</p>
-            </div>
-          </div>
-          <div className="relative mt-4 h-[170px] rounded-xl bg-slate-50 border border-slate-100 overflow-hidden">
-            <div className="absolute inset-x-3 bottom-3 flex items-end gap-2">
-              {stairHeights.map((height, index) => (
+              <div className="relative mt-4 h-[153px] overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+                <div className="absolute inset-x-3 bottom-3 flex items-end gap-2">
+                  {stairHeights.map((height, index) => (
+                    <div
+                      key={`step-${height}`}
+                      className={`flex-1 rounded-2xl transition-all duration-500 ${
+                        index <= stepIndex ? 'bg-emerald-400' : 'bg-slate-200'
+                      }`}
+                      style={{ height: `${height}px` }}
+                    />
+                  ))}
+                </div>
                 <div
-                  key={`step-${height}`}
-                  className={`flex-1 rounded-2xl transition-all duration-500 ${
-                    index <= stepIndex ? 'bg-emerald-400' : 'bg-slate-200'
-                  }`}
-                  style={{ height: `${height}px` }}
-                />
-              ))}
+                  className="absolute text-2xl transition-all duration-700 ease-out"
+                  style={{
+                    left: `calc(${displayRate}% - 12px)`,
+                    bottom: `${climberBottom + 5}px`,
+                  }}
+                  aria-label="진도 캐릭터"
+                >
+                  {climberIcon}
+                </div>
+              </div>
+              <div className="mt-1 flex justify-between px-1 text-[10px] text-slate-400">
+                <span>0%</span>
+                <span>50%</span>
+                <span>100%</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="px-4 pb-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl border border-toss-border bg-white p-3">
+                <p className="text-xs text-toss-sub">전체 진행 달성률</p>
+                <p className="mt-1 text-xl font-semibold">{overallProjectProgressRate}%</p>
+              </div>
+              <div className="rounded-xl border border-toss-border bg-white p-3">
+                <p className="text-xs text-toss-sub">진행 현황</p>
+                <p className="mt-1 text-xl font-semibold">{state.projects.length}개</p>
+                <p className="mt-1 text-[11px] text-toss-sub">오늘 달성률 {displayTodayRate}%</p>
+              </div>
             </div>
             <div
-              className="absolute text-2xl transition-all duration-700 ease-out"
-              style={{
-                left: `calc(${displayRate}% - 12px)`,
-                bottom: `${climberBottom + 6}px`,
-              }}
-              aria-label="진도 캐릭터"
+              className={`mt-2 rounded-xl border-2 bg-white p-3 ${
+                displayTodayRate === 100 ? 'border-emerald-500' : 'border-emerald-300'
+              }`}
             >
-              {climberIcon}
+              <p className="text-sm font-semibold text-emerald-700">오늘 하루 달성률</p>
+              <p className="mt-1 text-2xl font-bold text-emerald-700">{displayTodayRate}%</p>
+              <p className="mt-1 text-sm font-semibold text-emerald-700">나의 목표들</p>
+              <div className="mt-2 space-y-1">
+                {displayTodayProjectRows.length === 0 ? (
+                  <p className="text-[11px] text-toss-sub">아직 만든 프로젝트가 없어요</p>
+                ) : (
+                  displayTodayProjectRows.map((item) => (
+                    <div key={item.projectId} className="flex items-center justify-between text-xs">
+                      <span className="truncate pr-2 text-slate-600">{item.projectName}</span>
+                      <span className={item.doneToday ? 'font-semibold text-emerald-600' : 'font-semibold text-rose-500'}>
+                        {item.doneToday ? 'O' : 'X'}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
-          <div className="mt-1 px-1 flex justify-between text-[10px] text-slate-400">
-            <span>0%</span>
-            <span>50%</span>
-            <span>100%</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 sm:px-6 lg:px-8 pb-4">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-white border border-toss-border p-3">
-            <p className="text-xs text-toss-sub">전체 진행 달성률</p>
-            <p className="text-xl font-semibold mt-1">
-              {view === 'detail' && selectedProject ? `${selectedProjectRate}%` : `${overallProjectProgressRate}%`}
-            </p>
-          </div>
-          <div className="rounded-xl bg-white border border-toss-border p-3">
-            <p className="text-xs text-toss-sub">진행 현황</p>
-            <p className="text-xl font-semibold mt-1">
-              {view === 'detail' && selectedProject
-                ? `${activeStage(selectedProject).stageNumber}단계`
-                : `${state.projects.length}개`}
-            </p>
-            <p className="text-[11px] text-toss-sub mt-1">오늘 달성률 {displayTodayRate}%</p>
-          </div>
-        </div>
-        <div
-          className={`rounded-xl bg-white border-2 p-3 mt-2 ${
-            displayTodayRate === 100 ? 'border-emerald-500' : 'border-emerald-300'
-          }`}
-        >
-          <p className="text-sm font-semibold text-emerald-700">오늘 하루 달성률</p>
-          <p className="text-2xl font-bold text-emerald-700 mt-1">{displayTodayRate}%</p>
-          <p className="text-sm font-semibold text-emerald-700 mt-1">
-            {view === 'detail' && selectedProject ? '이 목표' : '나의 목표들'}
-          </p>
-          <div className="mt-2 space-y-1">
-            {displayTodayProjectRows.length === 0 ? (
-              <p className="text-[11px] text-toss-sub">아직 만든 프로젝트가 없어요</p>
-            ) : (
-              displayTodayProjectRows.map((item) => (
-                <div key={item.projectId} className="flex items-center justify-between text-xs">
-                  <span className="text-slate-600 truncate pr-2">{item.projectName}</span>
-                  <span className={item.doneToday ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'}>
-                    {item.doneToday ? 'O' : 'X'}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </section>
+          </section>
+        </>
+      )}
 
       {celebrationMessage && (
         <div
@@ -1007,77 +955,133 @@ export default function App() {
         </section>
       )}
 
-      {view !== 'create' && (
+      {view === 'list' && (
         <>
-          {view === 'list' && (
-            <section className="px-4 sm:px-6 lg:px-8 pt-2 pb-8">
-              <div className="flex items-end justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold">나의 전체 목표 개요</h3>
-                  <p className="text-xs text-toss-sub mt-1">
-                    이 화면은 “나의 전체 목표”예요. O/X와 전체 달성률을 먼저 보고,
-                    목표별로 들어가서 일자별로 체크하세요.
-                  </p>
-                </div>
-                <p className="text-xs text-slate-500">오늘 전체 달성률 {overallTodayRate}%</p>
+          <section className="px-4 pb-4 pt-2 sm:px-6 lg:px-8">
+            <div className="mb-3 flex items-end justify-between gap-2">
+              <div>
+                <h3 className="font-semibold">나의 전체 목표 개요</h3>
+                <p className="mt-1 text-xs text-toss-sub">
+                  목표 버튼을 누르면 아래에 상세가 열려요. 목표가 {GOALS_PER_PAGE}개를 넘으면 좌우 화살표로
+                  넘겨 보세요.
+                </p>
               </div>
+              <p className="shrink-0 text-xs text-slate-500">오늘 전체 달성률 {overallTodayRate}%</p>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {state.projects.map((project) => {
-                  const current = activeStage(project);
-                  const currentRate = stageRate(current);
-                  const doneToday = project.stages.some((stage) => stage.checkDates.includes(today));
-
-                  return (
-                    <article key={project.id} className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="font-semibold">{project.name}</h3>
-                          <p className="text-sm text-toss-sub mt-1">
-                            지금 {current.stageNumber}단계 · {current.title || '다음 단계를 설정해 주세요'}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-1">
-                            {current.startDate} ~ {current.endDate}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-col items-end gap-2">
-                          <span
-                            className={
-                              doneToday ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'
-                            }
-                          >
-                            {doneToday ? 'O' : 'X'}
-                          </span>
-                          <button type="button" className="text-xs text-slate-400 hover:text-slate-600" onClick={() => removeProject(project.id)}>
-                            삭제
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="mt-3">
-                        <p className="text-sm text-slate-700">현재 달성률 {currentRate}%</p>
+            {state.projects.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-slate-200 bg-white py-8 text-center text-sm text-toss-sub">
+                아직 목표가 없어요. &quot;+ 새 목표&quot;로 추가해 보세요.
+              </p>
+            ) : (
+              <>
+                <div className="flex items-stretch gap-2">
+                  {showGoalNavArrows && (
+                    <button
+                      type="button"
+                      className="w-9 shrink-0 rounded-lg border border-toss-border bg-white text-lg font-semibold text-slate-700 disabled:opacity-40"
+                      aria-label="이전 목표 페이지"
+                      disabled={goalPage <= 0}
+                      onClick={() => setGoalPage((p) => Math.max(0, p - 1))}
+                    >
+                      &lt;
+                    </button>
+                  )}
+                  <div className="flex min-w-0 flex-1 gap-2">
+                    {goalsOnPage.map((project) => {
+                      const current = activeStage(project);
+                      const doneToday = project.stages.some((stage) => stage.checkDates.includes(today));
+                      const isSelected = project.id === selectedProjectId;
+                      const rate = stageRate(current);
+                      return (
                         <button
+                          key={project.id}
                           type="button"
-                          className="mt-3 w-full rounded-lg bg-toss-blue text-white py-2 text-sm font-medium"
-                          onClick={() => {
-                            setSelectedProjectId(project.id);
-                            setView('detail');
-                            scrollToTop();
-                          }}
+                          onClick={() => setSelectedProjectId(project.id)}
+                          className={`min-h-[3.25rem] min-w-0 flex-1 rounded-xl border px-2 py-2 text-left text-sm font-medium transition-colors ${
+                            isSelected
+                              ? 'border-toss-blue bg-toss-blue text-white'
+                              : 'border-toss-border bg-white text-slate-800'
+                          }`}
                         >
-                          목표 상세로 들어가기
+                          <span className="line-clamp-2 leading-snug">{project.name}</span>
+                          <span
+                            className={`mt-1 block text-[11px] font-semibold ${
+                              isSelected ? 'text-white/90' : doneToday ? 'text-emerald-600' : 'text-rose-500'
+                            }`}
+                          >
+                            오늘 {doneToday ? 'O' : 'X'} · {rate}%
+                          </span>
                         </button>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </section>
-          )}
+                      );
+                    })}
+                  </div>
+                  {showGoalNavArrows && (
+                    <button
+                      type="button"
+                      className="w-9 shrink-0 rounded-lg border border-toss-border bg-white text-lg font-semibold text-slate-700 disabled:opacity-40"
+                      aria-label="다음 목표 페이지"
+                      disabled={goalPage >= goalPageMax}
+                      onClick={() => setGoalPage((p) => Math.min(goalPageMax, p + 1))}
+                    >
+                      &gt;
+                    </button>
+                  )}
+                </div>
+                {showGoalNavArrows && (
+                  <p className="mt-2 text-center text-[11px] text-toss-sub">
+                    {goalPage + 1} / {goalPageMax + 1} · 한 페이지에 최대 {GOALS_PER_PAGE}개
+                  </p>
+                )}
+              </>
+            )}
+          </section>
 
-          {view === 'detail' && selectedProject && (
-            <section className="px-4 sm:px-6 lg:px-8 pb-10 space-y-3">
+          {selectedProject && (
+            <section className="space-y-3 px-4 pb-10 sm:px-6 lg:px-8">
+              <h3 className="text-lg font-bold text-slate-900">목표 상세</h3>
+              <div className="rounded-xl border border-toss-border bg-white p-4 text-center">
+                <p className="text-sm font-semibold text-emerald-700">좋은 습관 만들기</p>
+                <p className="mt-1 text-sm font-semibold text-emerald-700">
+                  {activeStage(selectedProject).stageNumber}단계
+                </p>
+                <p className="mt-2 text-base font-semibold leading-snug text-slate-800 sm:text-lg">
+                  목표 : {selectedProject.name} -{' '}
+                  {(() => {
+                    const st = activeStage(selectedProject);
+                    if (st.title?.trim()) return st.title.trim();
+                    if (st.needsSetup) return '다음 단계 설정';
+                    return '—';
+                  })()}
+                </p>
+              </div>
+
+              {(() => {
+                const current = activeStage(selectedProject);
+                const canCheckToday = isStageWindowToday(current, today) && !current.completed && !current.needsSetup;
+                return (
+                  <div className="rounded-xl border border-toss-border bg-white p-3 sm:p-4">
+                    <button
+                      type="button"
+                      className={`w-full rounded-xl border-2 py-3 font-medium ${
+                        current.checkDates.includes(today)
+                          ? 'border-emerald-500 bg-emerald-500 text-white'
+                          : 'border-emerald-300 bg-slate-100 text-slate-700'
+                      } ${canCheckToday ? '' : 'border-emerald-300 opacity-60'}`}
+                      onClick={() => toggleTodayOnActiveStage(selectedProject.id)}
+                      disabled={!canCheckToday}
+                    >
+                      {current.checkDates.includes(today) ? '오늘 완료했어요' : checkButtonLabel}
+                    </button>
+                    {!canCheckToday && (
+                      <p className="mt-2 text-center text-xs text-slate-500">
+                        이 단계를 설정한 뒤에 오늘 체크를 할 수 있어요.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
                 {editingProjectId === selectedProject.id ? (
                   <form
@@ -1108,15 +1112,24 @@ export default function App() {
                     </div>
                   </form>
                 ) : (
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs text-toss-sub">상단에 목표와 단계가 표시돼요</p>
-                    <button
-                      type="button"
-                      className="text-xs text-slate-500 border border-slate-300 rounded-md px-2 py-1 shrink-0"
-                      onClick={() => startEditProject(selectedProject)}
-                    >
-                      프로젝트명 수정
-                    </button>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-toss-sub">위 정보 칸에 선택한 목표와 단계가 표시돼요</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        className="shrink-0 rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-500"
+                        onClick={() => startEditProject(selectedProject)}
+                      >
+                        프로젝트명 수정
+                      </button>
+                      <button
+                        type="button"
+                        className="shrink-0 rounded-md border border-rose-200 px-2 py-1 text-xs text-rose-600"
+                        onClick={() => removeProject(selectedProject.id)}
+                      >
+                        이 목표 삭제
+                      </button>
+                    </div>
                   </div>
                 )}
                 <p className="text-sm text-toss-sub mt-1">

@@ -7,7 +7,7 @@ export default defineConfig({
     displayName: '좋은 습관 만들기',
     primaryColor: '#059669',
     // 콘솔 > 앱 정보에서 600×600 아이콘 우클릭 → 링크 복사 후 붙여넣기
-    icon: '',
+    icon: '/app-brand-logo.png',
   },
   web: {
     host: 'localhost',
