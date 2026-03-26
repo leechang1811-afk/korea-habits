@@ -542,16 +542,13 @@ export default function App() {
       const level = Math.min(10, n);
       fireSuccess(level);
       showCelebration(
-        `${current.stageNumber}단계를 끝까지 지켜내다니, 정말 대단해요. 당신의 꾸준함이 빛나는 순간이에요. 앞으로의 여정도 응원할게요, 화이팅!`,
-        3600
+        `${current.stageNumber}단계 완주, 정말 멋져요. 꾸준함이 빛났어요. 앞으로도 화이팅!`,
+        2800
       );
       track('stage_completed_100', { stage_number: current.stageNumber, celebration_level: level });
     } else if (addingTodayCheck && current) {
       fireTodayHabitCheck();
-      showCelebration(
-        '오늘도 약속을 지키셨네요. 작은 승리가 모여 큰 변화가 돼요. 당신을 진심으로 응원해요, 오늘도 수고 많았어요!',
-        3600
-      );
+      showCelebration('오늘도 약속 지키셨네요. 작은 승리가 쌓여요. 응원할게요!', 2800);
       track('stage_today_checked', { project_id: projectId });
     }
     track('stage_toggle_today');
@@ -581,10 +578,7 @@ export default function App() {
     });
     setNextStageTitle('');
     fireNextStageStart();
-    showCelebration(
-      '새로운 도전의 문이 열렸어요. 지금까지 쌓아 온 힘이 다음 길도 밝혀 줄 거예요. 믿고 또 한 걸음, 화이팅!',
-      3600
-    );
+    showCelebration('새 도전이 시작됐어요. 지금까지 온 힘으로 한 걸음 더, 화이팅!', 2800);
     track('stage_setup', { duration_days: durationDays });
   }
 
@@ -672,10 +666,7 @@ export default function App() {
         dailyStageSuccessCountRef.current + dailyOverallSuccessCountRef.current + 1
       );
       fireSuccess(level);
-      showCelebration(
-        '오늘 모든 목표에 불을 켜 주셨네요! 하루를 온전히 살아낸 당신에게 박수를 보내요. 내일도 이 마음 그대로, 화이팅!',
-        3600
-      );
+      showCelebration('오늘 목표를 모두 채웠어요! 대단해요. 내일도 화이팅!', 2800);
       track('overall_today_completed_100', { level });
     }
 
@@ -893,22 +884,25 @@ export default function App() {
             onClick={() => dismissCelebration()}
           />
           <div
-            className="relative z-10 w-full max-w-sm rounded-2xl border-2 border-emerald-400 bg-white px-6 py-6 shadow-2xl shadow-emerald-900/10"
+            className="relative z-10 flex w-full max-w-sm flex-col items-center rounded-2xl border-2 border-emerald-400 bg-white px-6 py-6 text-center shadow-2xl shadow-emerald-900/10"
             onClick={(e) => e.stopPropagation()}
           >
-            <p id="celebration-dialog-title" className="text-center text-base sm:text-lg font-semibold text-emerald-800 leading-snug">
+            <p
+              id="celebration-dialog-title"
+              className="w-full text-balance text-base font-semibold leading-relaxed text-emerald-800 sm:text-lg"
+            >
               {celebrationMessage}
             </p>
             {celebrationCountdown !== null && (
               <p
-                className="mt-4 text-center text-[11px] font-medium text-slate-400 tabular-nums tracking-[0.2em]"
+                className="mt-4 text-[11px] font-medium tabular-nums tracking-[0.2em] text-slate-400"
                 aria-live="polite"
                 aria-atomic="true"
               >
                 ({celebrationCountdown})
               </p>
             )}
-            <p className="mt-1 text-center text-[10px] text-slate-400">잠시 후 자동으로 닫혀요</p>
+            <p className="mt-1 text-[10px] text-slate-400">잠시 후 자동으로 닫혀요</p>
           </div>
         </div>
       )}
