@@ -628,7 +628,7 @@ export default function App() {
       }
       await navigator.clipboard.writeText(shareText);
       setShareCopied(true);
-      window.setTimeout(() => setShareCopied(false), 1800);
+      window.setTimeout(() => setShareCopied(false), 2000);
       track('share_link_copy');
     } catch {
       // fallback
@@ -694,9 +694,9 @@ export default function App() {
   }, [state.projects]);
   const dashboardRate = overallProjectProgressRate;
   const displayRate = Math.min(94, Math.max(6, dashboardRate));
-  const stairHeights = [13, 22, 34, 49, 65, 83, 103];
+  const stairHeights = [12, 20, 31, 45, 60, 76, 94];
   const stepIndex = Math.round((dashboardRate / 100) * (stairHeights.length - 1));
-  const climberBottom = stairHeights[Math.max(0, Math.min(stepIndex, stairHeights.length - 1))] + 16;
+  const climberBottom = stairHeights[Math.max(0, Math.min(stepIndex, stairHeights.length - 1))] + 14;
   const checkButtonLabel = deviceType === 'mobile' ? '오늘 완료 체크하기' : '오늘 완료하기';
   const climberIcon = dashboardRate <= 0 ? '🚶‍➡️' : '🏃‍➡️';
   const selectedProjectDateStageMap = useMemo(() => {
@@ -799,17 +799,21 @@ export default function App() {
                 <div className="flex shrink-0 items-center gap-2 self-end sm:self-start">
                   <button
                     type="button"
-                    className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700"
+                    className={`rounded-lg border-[3px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                      shareCopied
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-900'
+                        : 'border-emerald-600 bg-white text-emerald-800 hover:bg-emerald-50/80'
+                    }`}
                     onClick={() => {
                       void copyShareLink();
                     }}
                   >
-                    내 성공률 공유하기
+                    {shareCopied ? '링크가 복사되었습니다.' : '내 성공률 공유하기'}
                   </button>
                   <p className="text-lg font-bold text-toss-blue">{dashboardRate}%</p>
                 </div>
               </div>
-              <div className="relative mt-4 h-[153px] overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+              <div className="relative mt-4 h-[138px] overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
                 <div className="absolute inset-x-3 bottom-3 flex items-end gap-2">
                   {stairHeights.map((height, index) => (
                     <div
@@ -915,14 +919,6 @@ export default function App() {
           </div>
         </div>
       )}
-      {shareCopied && (
-        <section className="px-4 sm:px-6 lg:px-8 pb-2">
-          <div className="rounded-xl bg-blue-50 border border-blue-200 px-3 py-2 text-blue-700 text-sm font-medium">
-            공유 링크를 복사했어요.
-          </div>
-        </section>
-      )}
-
       {view === 'create' && (
         <section className="px-4 sm:px-6 lg:px-8 pb-8">
           {state.projects.length > 0 && (
