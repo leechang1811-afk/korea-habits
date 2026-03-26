@@ -319,6 +319,7 @@ export default function App() {
   /** 목표별 이번 날짜에 몇 번 단계 100%를 달성했는지 — 폭죽 강도(목표마다 따로) */
   const perProjectStageCompleteTodayRef = useRef<Record<string, number>>({});
   const lastCalendarDateRef = useRef<string>(today);
+  const createOpenedViaNewGoalButtonRef = useRef(false);
 
   function clearCelebrationTimers(): void {
     if (celebrationTimeoutRef.current !== null) {
@@ -353,6 +354,19 @@ export default function App() {
   }
 
   useEffect(() => () => clearCelebrationTimers(), []);
+
+  useEffect(() => {
+    if (view !== 'create' || !createOpenedViaNewGoalButtonRef.current) return;
+    createOpenedViaNewGoalButtonRef.current = false;
+    const t = window.setTimeout(() => {
+      const h = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight
+      );
+      window.scrollTo({ top: h, behavior: 'smooth' });
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, [view]);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -693,15 +707,7 @@ export default function App() {
         {view === 'detail' && selectedProject ? (
           <>
             <p className="text-sm font-semibold text-emerald-700 mt-1 leading-snug">
-              {(() => {
-                const st = activeStage(selectedProject);
-                const titlePart = st.title?.trim()
-                  ? ` · ${st.title.trim()}`
-                  : st.needsSetup
-                    ? ' · 다음 단계를 설정해 주세요'
-                    : '';
-                return `${st.stageNumber}단계${titlePart}`;
-              })()}
+              {activeStage(selectedProject).stageNumber}단계
             </p>
             <p className="text-base sm:text-lg font-semibold text-slate-800 mt-2 leading-snug">
               목표 : {selectedProject.name} -{' '}
@@ -756,7 +762,10 @@ export default function App() {
           <button
             type="button"
             className="rounded-lg px-3 py-2 text-sm bg-white border border-toss-border ml-auto whitespace-nowrap"
-            onClick={() => setView('create')}
+            onClick={() => {
+              createOpenedViaNewGoalButtonRef.current = true;
+              setView('create');
+            }}
           >
             + 새 목표
           </button>
