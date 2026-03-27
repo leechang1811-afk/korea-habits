@@ -26,12 +26,18 @@ type ProjectF = {
   stages: StageF[];
 };
 
+export type ScreenshotConfettiKind = 'success' | 'today' | 'next';
+
 export type ScreenshotBootstrap = {
   state: { projects: ProjectF[] };
   view: 'create' | 'list';
   selectedProjectId: string | null;
   /** 마운트 후 한 번 띄울 축하 문구(캡처용) */
   celebrationMessage?: string;
+  /** 축하 모달과 함께 쓸 폭죽 종류 — 실제 플로우와 동일하게 맞춤 */
+  celebrationConfetti?: ScreenshotConfettiKind;
+  /** `success`일 때 `fireSuccess(level)`에 전달 (기본 1) */
+  celebrationConfettiLevel?: number;
 };
 
 function isoToday(): string {
@@ -198,6 +204,8 @@ const FIXTURES: Record<string, ScreenshotBootstrap> = {
     view: 'list',
     selectedProjectId: 'shot-c1',
     celebrationMessage: '1단계 완주, 정말 멋져요.\n꾸준함이 빛났어요.\n앞으로도 화이팅!',
+    celebrationConfetti: 'success',
+    celebrationConfettiLevel: 1,
   },
   /** 스토어용: 오늘 완료 체크 축하 멘트 */
   'celebration-today': {
@@ -227,6 +235,7 @@ const FIXTURES: Record<string, ScreenshotBootstrap> = {
     view: 'list',
     selectedProjectId: 'shot-c2',
     celebrationMessage: '오늘도 약속 지키셨네요.\n작은 승리가 쌓여요.\n응원할게요!',
+    celebrationConfetti: 'today',
   },
   'next-stage-setup': {
     state: {

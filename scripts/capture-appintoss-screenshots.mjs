@@ -69,7 +69,7 @@ async function applyScroll(page, scroll) {
 async function waitForCelebrationDialog(page) {
   await page.waitForSelector('[role="dialog"]', { timeout: 15000 });
   await page.waitForSelector('#celebration-dialog-title', { timeout: 5000 });
-  await new Promise((r) => setTimeout(r, 350));
+  await new Promise((r) => setTimeout(r, 520));
 }
 
 async function main() {
@@ -97,7 +97,8 @@ async function main() {
 
   const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
-  await page.setViewport({ width: 636, height: 1048, deviceScaleFactor: 2 });
+  // 스토어/심사 요구: PNG 픽셀 크기 정확히 636×1048 (deviceScaleFactor 2면 1272×2096이 됨)
+  await page.setViewport({ width: 636, height: 1048, deviceScaleFactor: 1 });
 
   try {
     for (const { shot, filename, scroll } of CAPTURES) {

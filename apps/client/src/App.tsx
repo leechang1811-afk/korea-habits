@@ -314,6 +314,8 @@ type ShotInitRef = {
   view: 'create' | 'list';
   selected: string | null;
   celebration?: string;
+  celebrationConfetti?: 'success' | 'today' | 'next';
+  celebrationConfettiLevel?: number;
 };
 
 const shotInitSingleton: { current: ShotInitRef | null } = { current: null };
@@ -328,6 +330,8 @@ function resolveShotInitOnce(): ShotInitRef {
       view: init.bootstrap.view,
       selected: init.bootstrap.selectedProjectId,
       celebration: init.bootstrap.celebrationMessage,
+      celebrationConfetti: init.bootstrap.celebrationConfetti,
+      celebrationConfettiLevel: init.bootstrap.celebrationConfettiLevel,
     };
   } else {
     shotInitSingleton.current = {
@@ -420,7 +424,12 @@ export default function App() {
     if (!screenshotShotKey || !shotInit.celebration) return;
     let cancelled = false;
     const t = window.setTimeout(() => {
-      if (!cancelled) showCelebration(shotInit.celebration!, 60000);
+      if (cancelled) return;
+      const kind = shotInit.celebrationConfetti;
+      if (kind === 'success') fireSuccess(shotInit.celebrationConfettiLevel ?? 1);
+      else if (kind === 'today') fireTodayHabitCheck();
+      else if (kind === 'next') fireNextStageStart();
+      showCelebration(shotInit.celebration!, 60000);
     }, 300);
     return () => {
       cancelled = true;
@@ -935,40 +944,46 @@ export default function App() {
       )}
 
       {celebrationMessage && (
-        <div
-          className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/45 backdrop-blur-[2px]"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="celebration-dialog-title"
-        >
+        <>
+          <div
+            className="fixed inset-0 z-[100000] bg-slate-900/45 backdrop-blur-[2px]"
+            aria-hidden
+          />
           <button
             type="button"
-            className="absolute inset-0 cursor-default"
+            className="fixed inset-0 z-[100002] cursor-default"
             aria-label="닫기"
             onClick={() => dismissCelebration()}
           />
           <div
-            className="relative z-10 flex w-full max-w-sm flex-col items-center rounded-2xl border-2 border-emerald-400 bg-white px-6 py-6 text-center shadow-2xl shadow-emerald-900/10"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[100003] flex items-center justify-center p-6 pointer-events-none"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="celebration-dialog-title"
           >
-            <p
-              id="celebration-dialog-title"
-              className="w-full whitespace-pre-line text-balance text-base font-semibold leading-relaxed text-emerald-800 sm:text-lg"
+            <div
+              className="pointer-events-auto relative flex w-full max-w-sm flex-col items-center rounded-2xl border-2 border-emerald-400 bg-white px-6 py-6 text-center shadow-2xl shadow-emerald-900/10"
+              onClick={(e) => e.stopPropagation()}
             >
-              {celebrationMessage}
-            </p>
-            {celebrationCountdown !== null && (
               <p
-                className="mt-4 text-[11px] font-medium tabular-nums tracking-[0.2em] text-slate-400"
-                aria-live="polite"
-                aria-atomic="true"
+                id="celebration-dialog-title"
+                className="w-full whitespace-pre-line text-balance text-base font-semibold leading-relaxed text-emerald-800 sm:text-lg"
               >
-                ({celebrationCountdown})
+                {celebrationMessage}
               </p>
-            )}
-            <p className="mt-1 text-[10px] text-slate-400">잠시 후 자동으로 닫혀요</p>
+              {celebrationCountdown !== null && (
+                <p
+                  className="mt-4 text-[11px] font-medium tabular-nums tracking-[0.2em] text-slate-400"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  ({celebrationCountdown})
+                </p>
+              )}
+              <p className="mt-1 text-[10px] text-slate-400">잠시 후 자동으로 닫혀요</p>
+            </div>
           </div>
-        </div>
+        </>
       )}
       {view === 'create' && (
         <section className="px-4 sm:px-6 lg:px-8 pb-8">
