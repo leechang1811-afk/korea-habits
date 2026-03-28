@@ -4,6 +4,7 @@ import { track } from './services/analytics';
 import { adsService } from './services/ads';
 import { fireNextStageStart, fireSuccess, fireTodayHabitCheck } from './utils/confetti';
 import { readScreenshotInit } from './screenshotFixtures';
+import brandLogoUrl from './assets/app-brand-logo.png';
 
 type Stage = {
   id: string;
@@ -365,6 +366,7 @@ export default function App() {
   const [editingStageDays, setEditingStageDays] = useState(7);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingProjectName, setEditingProjectName] = useState('');
+  const [navLogoFailed, setNavLogoFailed] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
   const today = toDateKey();
@@ -797,17 +799,34 @@ export default function App() {
 
   return (
     <main className="mx-auto w-full max-w-5xl min-h-[100dvh] bg-slate-50 text-toss-text">
-      <header className="sticky top-0 z-40 border-b border-toss-border bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-12 max-w-5xl items-center gap-2.5 px-4 sm:px-6 lg:px-8">
-          <img
-            src="/app-brand-logo.png"
-            alt="좋은 습관 만들기"
-            className="h-9 w-9 shrink-0 rounded-lg object-cover"
-            width={36}
-            height={36}
-          />
+      <header className="sticky top-0 z-40 border-b border-toss-border bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm">
+        <nav
+          className="mx-auto flex h-12 max-w-5xl items-center gap-2.5 px-4 sm:px-6 lg:px-8"
+          aria-label="공통 내비게이션"
+        >
+          {navLogoFailed ? (
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-sky-500 text-base font-bold text-white shadow-sm ring-2 ring-slate-200 ring-offset-1"
+              role="img"
+              aria-label="좋은 습관 만들기"
+            >
+              ✓
+            </div>
+          ) : (
+            <img
+              src={brandLogoUrl}
+              alt="좋은 습관 만들기"
+              className="h-9 w-9 shrink-0 rounded-lg object-cover ring-2 ring-slate-200 ring-offset-1"
+              width={36}
+              height={36}
+              loading="eager"
+              fetchPriority="high"
+              decoding="sync"
+              onError={() => setNavLogoFailed(true)}
+            />
+          )}
           <span className="text-sm font-semibold text-slate-800">좋은 습관 만들기</span>
-        </div>
+        </nav>
       </header>
 
       <section className="px-4 pb-2 pt-5 text-center sm:px-6 sm:pt-6 lg:px-8">
