@@ -1111,15 +1111,13 @@ export default function App() {
       {view === 'list' && (
         <>
           <section className="px-4 pb-4 pt-2 sm:px-6 lg:px-8">
-            <div className="mb-3 flex items-end justify-between gap-2">
-              <div>
-                <h3 className="font-semibold">나의 전체 목표 개요</h3>
-                <p className="mt-1 text-xs text-toss-sub">
-                  목표 버튼을 누르면 아래에 상세가 열려요. 목표가 {GOALS_PER_PAGE}개를 넘으면 좌우 화살표로
-                  넘겨 보세요.
-                </p>
-              </div>
-              <p className="shrink-0 text-xs text-slate-500">오늘 전체 달성률 {overallTodayRate}%</p>
+            <div className="mb-3 text-center">
+              <h3 className="font-semibold">나의 전체 목표 개요</h3>
+              <p className="mt-1 text-xs text-toss-sub">
+                목표 버튼을 누르면 아래에 상세가 열려요. 목표가 {GOALS_PER_PAGE}개를 넘으면 좌우 화살표로
+                넘겨 보세요.
+              </p>
+              <p className="mt-2 text-xs text-slate-500">오늘 전체 달성률 {overallTodayRate}%</p>
             </div>
 
             {state.projects.length === 0 ? (
@@ -1228,11 +1226,16 @@ export default function App() {
                       {doneTodayUi ? '오늘 완료했어요' : checkButtonLabel}
                     </button>
                     {!canCheckToday && !doneTodayUi && (
-                      <p className="mt-2 text-center text-xs leading-relaxed text-slate-500">
-                        {current.needsSetup
-                          ? '다음 단계는 설정을 마치면 내일부터 시작돼요. 내일부터 여기서 하루 체크를 이어가실 수 있어요.'
-                          : '다음 단계로 이동하여 내일부터 다시 오늘 완료하기 체크를 할 수 있어요.'}
-                      </p>
+                      <div className="mt-2 space-y-1 text-center text-xs font-medium leading-relaxed text-red-600">
+                        {current.needsSetup ? (
+                          <>
+                            <p>다음 단계는 설정을 마치면 내일부터 시작돼요.</p>
+                            <p>내일부터 여기서 하루 체크를 이어가실 수 있어요.</p>
+                          </>
+                        ) : (
+                          <p>다음 단계로 이동하여 내일부터 다시 오늘 완료하기 체크를 할 수 있어요.</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
@@ -1341,7 +1344,7 @@ export default function App() {
                             value={nextStageTitle}
                             onChange={(event) => setNextStageTitle(event.target.value)}
                             placeholder="다음 단계 목표를 적어주세요"
-                            className="w-full rounded-lg border border-toss-border px-3 py-2 bg-white outline-none"
+                            className="w-full rounded-lg border border-toss-border px-3 py-2 bg-white outline-none placeholder:font-semibold placeholder:text-emerald-800"
                           />
                           <div className="flex gap-2 flex-wrap">
                             {suggestionTitles.map((suggestion) => (
@@ -1360,7 +1363,7 @@ export default function App() {
                             <br />
                             예시) 10분 독서(14일) 성공 → 15분 독서(14일) 도전
                           </div>
-                          <p className="text-xs text-toss-sub">
+                          <p className="text-xs font-medium text-red-600">
                             안내: 지금 설정하는 다음 단계는 내일부터 시작되고, 오늘 성공한 기록은 그대로 유지돼요.
                           </p>
                           <select
