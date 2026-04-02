@@ -19,7 +19,11 @@ export default defineConfig({
   },
   outdir: 'dist',
   permissions: [],
+  // 비게임 미니앱은 'partner'로 표준 내비게이션 바가 적용됩니다. 'game'이면 반려 사유가 될 수 있어요.
   webViewProps: {
-    type: 'game',
+    type: 'partner',
+    pullToRefreshEnabled: false,
+    bounces: false,
+    overScrollMode: 'never',
   },
 });
