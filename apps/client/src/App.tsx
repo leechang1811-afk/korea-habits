@@ -1492,7 +1492,9 @@ export default function App() {
         </>
       )}
 
-      {!screenshotShotKey && <BannerAd />}
+      {!screenshotShotKey && (
+        <BannerAd refreshKey={`${view}:${selectedProjectId ?? ''}`} />
+      )}
     </main>
   );
 }

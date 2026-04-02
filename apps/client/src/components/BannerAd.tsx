@@ -45,17 +45,22 @@ function ensureTossAdsInit(sdk: typeof import('@apps-in-toss/web-framework')): P
 function tryAttach(
   sdk: typeof import('@apps-in-toss/web-framework'),
   container: HTMLDivElement,
-  onDestroy: (fn: () => void) => void
+  onDestroy: (fn: () => void) => void,
+  isAborted: () => boolean
 ) {
   if (!tossBannerSupported(sdk)) return;
   ensureTossAdsInit(sdk).then((ok) => {
-    if (!ok || !container.isConnected) return;
+    if (isAborted() || !ok || !container.isConnected) return;
     try {
       const result = sdk.TossAds.attachBanner(AD_GROUP_BANNER, container, {
         theme: 'light',
         tone: 'grey',
         variant: 'card',
       });
+      if (isAborted()) {
+        result?.destroy?.();
+        return;
+      }
       if (result?.destroy) onDestroy(result.destroy);
     } catch {
       // SDK/네트워크 이슈 — 아래 지연 재시도에 맡김
@@ -63,7 +68,12 @@ function tryAttach(
   });
 }
 
-export default function BannerAd() {
+export type BannerAdProps = {
+  /** 값이 바뀔 때마다 기존 배너를 제거하고 슬롯에 다시 붙입니다 (목표 전환·화면 전환 등). */
+  refreshKey?: string;
+};
+
+export default function BannerAd({ refreshKey = '0' }: BannerAdProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const destroyRef = useRef<(() => void) | null>(null);
@@ -72,22 +82,32 @@ export default function BannerAd() {
   useEffect(() => {
     if (!AD_GROUP_BANNER) return;
 
+    let cancelled = false;
+    const isAborted = () => cancelled;
+
     const timer = setTimeout(() => {
+      if (cancelled) return;
+      destroyRef.current?.();
+      destroyRef.current = null;
       const container = containerRef.current;
       if (!container) return;
       getBannerSdk()
-        .then((sdk) => tryAttach(sdk, container, (destroy) => {
-          destroyRef.current = destroy;
-        }))
+        .then((sdk) => {
+          if (cancelled) return;
+          tryAttach(sdk, container, (destroy) => {
+            destroyRef.current = destroy;
+          }, isAborted);
+        })
         .catch(() => {});
     }, 600);
 
     return () => {
+      cancelled = true;
       clearTimeout(timer);
       destroyRef.current?.();
       destroyRef.current = null;
     };
-  }, []);
+  }, [refreshKey]);
 
   if (!AD_GROUP_BANNER) return null;
 
