@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { closeView, getOperationalEnvironment } from '@apps-in-toss/web-framework';
+import { getOperationalEnvironment } from '@apps-in-toss/web-framework';
 import BannerAd from './components/BannerAd';
 import { track } from './services/analytics';
 import { adsService } from './services/ads';
@@ -384,14 +384,6 @@ export default function App() {
       setInTossMiniApp(false);
     }
   }, []);
-
-  async function exitMiniApp(): Promise<void> {
-    try {
-      await closeView();
-    } catch {
-      /* 일반 브라우저에서는 브릿지 없음 */
-    }
-  }
 
   function scrollToTop(): void {
     if (typeof window === 'undefined') return;
@@ -822,7 +814,7 @@ export default function App() {
     <main className="mx-auto w-full max-w-5xl min-h-[100dvh] bg-slate-50 text-toss-text">
       <header className="sticky top-0 z-40 border-b border-toss-border bg-white/95 backdrop-blur-sm">
         <nav
-          className="mx-auto flex h-12 max-w-5xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8"
+          className="mx-auto flex h-12 max-w-5xl items-center gap-3 px-4 sm:px-6 lg:px-8"
           aria-label="공통 내비게이션"
         >
           <div className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -852,13 +844,6 @@ export default function App() {
               <span className="truncate text-sm font-semibold text-slate-800">좋은 습관 만들기</span>
             )}
           </div>
-          <button
-            type="button"
-            className="shrink-0 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-            onClick={() => void exitMiniApp()}
-          >
-            종료
-          </button>
         </nav>
       </header>
 
