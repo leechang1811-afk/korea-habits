@@ -126,6 +126,11 @@ function isCheckedTodayOnCurrentStage(current: Stage, todayKey: string): boolean
   return current.checkDates.includes(todayKey);
 }
 
+/** 다음 단계가 "내일부터 시작" 상태일 때만 수정 허용 (시작 당일 이후 수정 불가) */
+function canEditUpcomingStage(stage: Stage, todayKey: string): boolean {
+  return !stage.needsSetup && !stage.completed && !stage.failed && stage.startDate > todayKey;
+}
+
 function safeLoadState(): AppState {
   if (typeof window === 'undefined') return { projects: [] };
   try {
@@ -548,13 +553,6 @@ export default function App() {
     setProjectFlowStep(entryFlowStepForProject(current));
   }, [selectedProject, selectedProjectId]);
 
-  function returnToHomeAfter(delayMs: number): void {
-    window.setTimeout(() => {
-      setView('list');
-      scrollToTop();
-    }, delayMs);
-  }
-
   const selectedCurrentStage = useMemo(() => {
     if (!selectedProject) return null;
     return activeStage(selectedProject);
@@ -621,14 +619,13 @@ export default function App() {
         const current = activeStage(project);
         if (!isStageWindowToday(current, today) || current.completed || current.needsSetup) return project;
         const checked = current.checkDates.includes(today);
+        if (checked) return project; // 오늘 완료 후에는 해제(토글)하지 않음
         const nextStages = project.stages.map((stage) =>
           stage.id !== current.id
             ? stage
             : {
                 ...stage,
-                checkDates: checked
-                  ? stage.checkDates.filter((key) => key !== today)
-                  : [...stage.checkDates, today].sort(),
+                checkDates: [...stage.checkDates, today].sort(),
               }
         );
         return maybeAdvanceStage({ ...project, stages: nextStages }, today);
@@ -651,11 +648,7 @@ export default function App() {
     } else if (addingTodayCheck && current) {
       fireTodayHabitCheck();
       showCelebration('오늘도 약속 지키셨네요.\n작은 승리가 쌓여요.\n응원할게요!', 2800);
-      if (view === 'project') {
-        // 시나리오 2: 일반 오늘 체크 성공 시 결과를 짧게 보여준 뒤 홈 복귀
-        setProjectFlowStep('result');
-        returnToHomeAfter(900);
-      }
+      if (view === 'project') setProjectFlowStep('result');
       track('stage_today_checked', { project_id: projectId });
     }
     track('stage_toggle_today');
@@ -686,11 +679,7 @@ export default function App() {
     setNextStageTitle('');
     fireNextStageStart();
     showCelebration('새 도전이 시작됐어요.\n지금까지 온 힘으로 한 걸음 더,\n화이팅!', 2800);
-    if (view === 'project') {
-      // 시나리오 4: 다음 단계 세팅 완료 시 결과 확인 후 홈 복귀
-      setProjectFlowStep('result');
-      returnToHomeAfter(1100);
-    }
+    if (view === 'project') setProjectFlowStep('history');
     track('stage_setup', { duration_days: durationDays });
   }
 
@@ -1212,6 +1201,8 @@ export default function App() {
               {(() => {
                 const current = activeStage(selectedProject);
                 const currentRate = stageRate(current);
+                const plannedDays = daysInclusive(current.startDate, current.endDate);
+                const doneDays = current.checkDates.filter((d) => d >= current.startDate && d <= current.endDate).length;
                 const canCheckToday = isStageWindowToday(current, today) && !current.completed && !current.needsSetup;
                 const doneTodayUi = isCheckedTodayOnCurrentStage(current, today);
                 const stageTitle = current.title?.trim() || (current.needsSetup ? '다음 단계 설정' : '—');
@@ -1276,6 +1267,7 @@ export default function App() {
                     {projectFlowStep === 'check' && (
                     <div className="rounded-xl border-2 border-emerald-300 bg-white p-3 shadow-sm sm:p-4">
                       <p className="text-sm font-semibold text-emerald-700">1) 오늘 할 일</p>
+                      <p className="mt-1 text-xs font-medium text-slate-500">진행 현황: {doneDays}일 / {plannedDays}일</p>
                       <button
                         type="button"
                         className={`mt-2 w-full rounded-xl border-2 py-3.5 text-base font-semibold ${
@@ -1284,7 +1276,7 @@ export default function App() {
                             : 'border-emerald-300 bg-slate-100 text-slate-700'
                         } ${canCheckToday || doneTodayUi ? '' : 'border-emerald-300 opacity-60'}`}
                         onClick={() => toggleTodayOnActiveStage(selectedProject.id)}
-                        disabled={!canCheckToday}
+                        disabled={!canCheckToday || doneTodayUi}
                       >
                         {doneTodayUi ? '오늘 완료했어요' : checkButtonLabel}
                       </button>
@@ -1369,9 +1361,22 @@ export default function App() {
                           </button>
                         </form>
                       ) : (
-                        <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-                          다음 단계 설정이 완료되어 있어요. 오늘 체크를 이어서 진행해 주세요.
-                        </p>
+                        <div className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                          <p>다음 단계 설정이 완료되어 있어요.</p>
+                          <p className="mt-1">시작일: {current.startDate} (내일부터 적용)</p>
+                          {canEditUpcomingStage(current, today) && (
+                            <button
+                              type="button"
+                              className="mt-2 rounded-md border border-emerald-300 bg-white px-2 py-1 text-[11px] font-semibold text-emerald-700"
+                              onClick={() => {
+                                startEditStage(current);
+                                setProjectFlowStep('history');
+                              }}
+                            >
+                              목표 바꾸기
+                            </button>
+                          )}
+                        </div>
                       )}
                       <div className="mt-3 flex justify-end">
                         <button
@@ -1573,15 +1578,16 @@ export default function App() {
                                         </button>
                                       </div>
                                     </form>
-                                  ) : (
+                                  ) : null}
+                                  {editingStageId !== stage.id && canEditUpcomingStage(stage, today) && stage.id === current.id ? (
                                     <button
                                       type="button"
                                       className="mt-2 rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
                                       onClick={() => startEditStage(stage)}
                                     >
-                                      단계 수정하기
+                                      목표 바꾸기 (내일부터 적용)
                                     </button>
-                                  )}
+                                  ) : null}
                                 </li>
                               ))}
                             </ul>
