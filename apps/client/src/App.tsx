@@ -368,6 +368,7 @@ export default function App() {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingProjectName, setEditingProjectName] = useState('');
   const [navLogoFailed, setNavLogoFailed] = useState(false);
+  const [detailPage, setDetailPage] = useState<'today' | 'setup' | 'result' | 'history'>('today');
   /** 토스/샌드박스 WebView — 표준 내비가 있으므로 웹 전용 상단 브랜딩은 숨김 */
   const [inTossMiniApp, setInTossMiniApp] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -539,6 +540,16 @@ export default function App() {
     return state.projects.find((project) => project.id === selectedProjectId) ?? null;
   }, [selectedProjectId, state.projects]);
 
+  useEffect(() => {
+    if (!selectedProject) return;
+    const current = activeStage(selectedProject);
+    if (current.needsSetup) {
+      setDetailPage('setup');
+      return;
+    }
+    setDetailPage('today');
+  }, [selectedProject, selectedProjectId]);
+
   const selectedCurrentStage = useMemo(() => {
     if (!selectedProject) return null;
     return activeStage(selectedProject);
@@ -629,10 +640,12 @@ export default function App() {
         `${current.stageNumber}단계 완주, 정말 멋져요.\n꾸준함이 빛났어요.\n앞으로도 화이팅!`,
         2800
       );
+      setDetailPage('result');
       track('stage_completed_100', { stage_number: current.stageNumber, celebration_level: level });
     } else if (addingTodayCheck && current) {
       fireTodayHabitCheck();
       showCelebration('오늘도 약속 지키셨네요.\n작은 승리가 쌓여요.\n응원할게요!', 2800);
+      setDetailPage('result');
       track('stage_today_checked', { project_id: projectId });
     }
     track('stage_toggle_today');
@@ -663,6 +676,7 @@ export default function App() {
     setNextStageTitle('');
     fireNextStageStart();
     showCelebration('새 도전이 시작됐어요.\n지금까지 온 힘으로 한 걸음 더,\n화이팅!', 2800);
+    setDetailPage('today');
     track('stage_setup', { duration_days: durationDays });
   }
 
@@ -1196,6 +1210,38 @@ export default function App() {
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-4 gap-2 rounded-xl border border-toss-border bg-white p-2 shadow-sm">
+                      <button
+                        type="button"
+                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'today' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
+                        onClick={() => setDetailPage('today')}
+                      >
+                        오늘 체크
+                      </button>
+                      <button
+                        type="button"
+                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'setup' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
+                        onClick={() => setDetailPage('setup')}
+                      >
+                        다음 단계
+                      </button>
+                      <button
+                        type="button"
+                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'result' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
+                        onClick={() => setDetailPage('result')}
+                      >
+                        오늘 결과
+                      </button>
+                      <button
+                        type="button"
+                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'history' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
+                        onClick={() => setDetailPage('history')}
+                      >
+                        기록/설정
+                      </button>
+                    </div>
+
+                    {detailPage === 'today' && (
                     <div className="rounded-xl border-2 border-emerald-300 bg-white p-3 shadow-sm sm:p-4">
                       <p className="text-sm font-semibold text-emerald-700">1) 오늘 완료 체크</p>
                       <button
@@ -1222,8 +1268,19 @@ export default function App() {
                           )}
                         </div>
                       )}
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          className="rounded-lg bg-toss-blue px-3 py-2 text-xs font-semibold text-white"
+                          onClick={() => setDetailPage(current.needsSetup ? 'setup' : 'result')}
+                        >
+                          다음 단계 보기
+                        </button>
+                      </div>
                     </div>
+                    )}
 
+                    {detailPage === 'setup' && (
                     <div
                       className={`rounded-xl border-2 bg-white p-3 shadow-sm ${
                         current.needsSetup ? 'border-emerald-300' : 'border-slate-200'
@@ -1284,8 +1341,19 @@ export default function App() {
                           다음 단계 설정이 완료되어 있어요. 오늘 체크를 이어서 진행해 주세요.
                         </p>
                       )}
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          className="rounded-lg bg-toss-blue px-3 py-2 text-xs font-semibold text-white"
+                          onClick={() => setDetailPage('result')}
+                        >
+                          결과 보기
+                        </button>
+                      </div>
                     </div>
+                    )}
 
+                    {detailPage === 'result' && (
                     <div className="rounded-xl border border-toss-border bg-white p-4 shadow-sm">
                       <p className="text-sm font-semibold text-slate-800">3) 오늘 결과 / 현재 진도</p>
                       <div className="mt-2 grid grid-cols-2 gap-2">
@@ -1318,9 +1386,20 @@ export default function App() {
                           {currentRate}%
                         </span>
                       </div>
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white"
+                          onClick={() => setDetailPage('history')}
+                        >
+                          기록/설정 보기
+                        </button>
+                      </div>
                     </div>
+                    )}
 
-                    <details className="rounded-xl border border-toss-border bg-white p-4 shadow-sm">
+                    {detailPage === 'history' && (
+                    <details className="rounded-xl border border-toss-border bg-white p-4 shadow-sm" open>
                       <summary className="cursor-pointer text-sm font-semibold text-slate-800">
                         4) 프로젝트 설정 / 캘린더 / 진행 기록 보기
                       </summary>
@@ -1468,6 +1547,7 @@ export default function App() {
                         </div>
                       </div>
                     </details>
+                    )}
                   </>
                 );
               })()}
