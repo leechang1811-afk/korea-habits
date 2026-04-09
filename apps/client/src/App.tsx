@@ -115,13 +115,9 @@ function activeStage(project: HabitProject): Stage {
   return next ?? project.stages[project.stages.length - 1];
 }
 
-/** 전 단계를 오늘까지 체크해 완료한 뒤, 새 단계(설정 대기)로 넘어온 경우에도 '오늘 완료'로 표시 */
-function effectivelyCompletedToday(project: HabitProject, current: Stage, todayKey: string): boolean {
-  if (current.checkDates.includes(todayKey)) return true;
-  if (!current.needsSetup || current.stageNumber < 2) return false;
-  const prev = project.stages.find((s) => s.stageNumber === current.stageNumber - 1);
-  if (!prev?.completed) return false;
-  return prev.checkDates.includes(todayKey);
+/** 현재 활성 단계에서 오늘 체크가 실제로 찍혀 있는지 */
+function isCheckedTodayOnCurrentStage(current: Stage, todayKey: string): boolean {
+  return current.checkDates.includes(todayKey);
 }
 
 function safeLoadState(): AppState {
@@ -1211,12 +1207,24 @@ export default function App() {
                 const current = activeStage(selectedProject);
                 const currentRate = stageRate(current);
                 const canCheckToday = isStageWindowToday(current, today) && !current.completed && !current.needsSetup;
-                const doneTodayUi = effectivelyCompletedToday(selectedProject, current, today);
+                const doneTodayUi = isCheckedTodayOnCurrentStage(current, today);
                 const stageTitle = current.title?.trim() || (current.needsSetup ? '다음 단계 설정' : '—');
                 return (
                   <>
                     <div className="rounded-xl border border-toss-border bg-white p-4 shadow-sm">
-                      <p className="text-xs font-semibold tracking-wide text-toss-blue">오늘의 흐름</p>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs font-semibold tracking-wide text-toss-blue">오늘의 흐름</p>
+                        <button
+                          type="button"
+                          className="shrink-0 rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-600"
+                          onClick={() => {
+                            setView('list');
+                            scrollToTop();
+                          }}
+                        >
+                          홈으로
+                        </button>
+                      </div>
                       <h3 className="mt-1 text-lg font-bold text-slate-900">
                         {selectedProject.name} · {current.stageNumber}단계
                       </h3>
@@ -1575,7 +1583,7 @@ export default function App() {
       )}
 
       {!screenshotShotKey && (
-        <BannerAd refreshKey={`${view}:${selectedProjectId ?? ''}`} />
+        <BannerAd refreshKey={`${view}:${selectedProjectId ?? ''}:${projectFlowStep}`} />
       )}
     </main>
   );
