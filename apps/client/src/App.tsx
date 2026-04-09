@@ -1174,7 +1174,7 @@ export default function App() {
           </section>
 
           {selectedProject && (
-            <section className="space-y-3 px-4 pb-10 sm:px-6 lg:px-8">
+            <section className="space-y-4 px-4 pb-10 sm:px-6 lg:px-8">
               {(() => {
                 const current = activeStage(selectedProject);
                 const currentRate = stageRate(current);
@@ -1183,19 +1183,24 @@ export default function App() {
                 const stageTitle = current.title?.trim() || (current.needsSetup ? '다음 단계 설정' : '—');
                 return (
                   <>
-                    <div className="rounded-xl border border-toss-border bg-white p-4">
+                    <div className="rounded-xl border border-toss-border bg-white p-4 shadow-sm">
                       <p className="text-xs font-semibold tracking-wide text-toss-blue">오늘의 흐름</p>
                       <h3 className="mt-1 text-lg font-bold text-slate-900">
                         {selectedProject.name} · {current.stageNumber}단계
                       </h3>
                       <p className="mt-1 text-sm text-slate-600">현재 목표: {stageTitle}</p>
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
+                        <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700">1 오늘 체크</span>
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">2 다음 단계</span>
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">3 결과 확인</span>
+                      </div>
                     </div>
 
-                    <div className="rounded-xl border-2 border-emerald-300 bg-white p-3 sm:p-4">
+                    <div className="rounded-xl border-2 border-emerald-300 bg-white p-3 shadow-sm sm:p-4">
                       <p className="text-sm font-semibold text-emerald-700">1) 오늘 완료 체크</p>
                       <button
                         type="button"
-                        className={`mt-2 w-full rounded-xl border-2 py-3 font-medium ${
+                        className={`mt-2 w-full rounded-xl border-2 py-3.5 text-base font-semibold ${
                           doneTodayUi
                             ? 'border-emerald-500 bg-emerald-500 text-white'
                             : 'border-emerald-300 bg-slate-100 text-slate-700'
@@ -1220,7 +1225,7 @@ export default function App() {
                     </div>
 
                     <div
-                      className={`rounded-xl border-2 bg-white p-3 ${
+                      className={`rounded-xl border-2 bg-white p-3 shadow-sm ${
                         current.needsSetup ? 'border-emerald-300' : 'border-slate-200'
                       }`}
                     >
@@ -1281,7 +1286,7 @@ export default function App() {
                       )}
                     </div>
 
-                    <div className="rounded-xl border border-toss-border bg-white p-4">
+                    <div className="rounded-xl border border-toss-border bg-white p-4 shadow-sm">
                       <p className="text-sm font-semibold text-slate-800">3) 오늘 결과 / 현재 진도</p>
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -1315,7 +1320,7 @@ export default function App() {
                       </div>
                     </div>
 
-                    <details className="rounded-xl border border-toss-border bg-white p-4">
+                    <details className="rounded-xl border border-toss-border bg-white p-4 shadow-sm">
                       <summary className="cursor-pointer text-sm font-semibold text-slate-800">
                         4) 프로젝트 설정 / 캘린더 / 진행 기록 보기
                       </summary>
