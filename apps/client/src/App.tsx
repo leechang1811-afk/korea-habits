@@ -1014,7 +1014,7 @@ export default function App() {
           <section className="px-4 pb-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-xl border border-toss-border bg-white p-3">
-                <p className="text-xs text-toss-sub">전체 진행 달성률</p>
+                <p className="text-xs text-toss-sub">최근 30일 기준 성공률</p>
                 <p className="mt-1 text-xl font-semibold">{overallProjectProgressRate}%</p>
               </div>
               <div className="rounded-xl border border-toss-border bg-white p-3">
