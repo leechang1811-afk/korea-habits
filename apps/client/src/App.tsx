@@ -1204,9 +1204,9 @@ export default function App() {
                       </h3>
                       <p className="mt-1 text-sm text-slate-600">현재 목표: {stageTitle}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
-                        <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700">1 오늘 체크</span>
-                        <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">2 다음 단계</span>
-                        <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">3 결과 확인</span>
+                        <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700">1 오늘 할 일</span>
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">2 준비하기</span>
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">3 결과 보기</span>
                       </div>
                     </div>
 
@@ -1216,34 +1216,34 @@ export default function App() {
                         className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'today' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
                         onClick={() => setDetailPage('today')}
                       >
-                        오늘 체크
+                        오늘 할 일
                       </button>
                       <button
                         type="button"
                         className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'setup' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
                         onClick={() => setDetailPage('setup')}
                       >
-                        다음 단계
+                        준비하기
                       </button>
                       <button
                         type="button"
                         className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'result' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
                         onClick={() => setDetailPage('result')}
                       >
-                        오늘 결과
+                        결과 보기
                       </button>
                       <button
                         type="button"
                         className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'history' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
                         onClick={() => setDetailPage('history')}
                       >
-                        기록/설정
+                        전체 기록
                       </button>
                     </div>
 
                     {detailPage === 'today' && (
                     <div className="rounded-xl border-2 border-emerald-300 bg-white p-3 shadow-sm sm:p-4">
-                      <p className="text-sm font-semibold text-emerald-700">1) 오늘 완료 체크</p>
+                      <p className="text-sm font-semibold text-emerald-700">1) 오늘 할 일</p>
                       <button
                         type="button"
                         className={`mt-2 w-full rounded-xl border-2 py-3.5 text-base font-semibold ${
@@ -1274,7 +1274,7 @@ export default function App() {
                           className="rounded-lg bg-toss-blue px-3 py-2 text-xs font-semibold text-white"
                           onClick={() => setDetailPage(current.needsSetup ? 'setup' : 'result')}
                         >
-                          다음 단계 보기
+                          준비하기
                         </button>
                       </div>
                     </div>
@@ -1286,7 +1286,7 @@ export default function App() {
                         current.needsSetup ? 'border-emerald-300' : 'border-slate-200'
                       }`}
                     >
-                      <p className="text-sm font-semibold text-emerald-700">2) 다음 단계 세팅</p>
+                      <p className="text-sm font-semibold text-emerald-700">2) 준비하기</p>
                       {current.needsSetup ? (
                         <form
                           className="mt-2 space-y-2"
@@ -1347,7 +1347,7 @@ export default function App() {
                           className="rounded-lg bg-toss-blue px-3 py-2 text-xs font-semibold text-white"
                           onClick={() => setDetailPage('result')}
                         >
-                          결과 보기
+                          결과 확인
                         </button>
                       </div>
                     </div>
@@ -1355,7 +1355,7 @@ export default function App() {
 
                     {detailPage === 'result' && (
                     <div className="rounded-xl border border-toss-border bg-white p-4 shadow-sm">
-                      <p className="text-sm font-semibold text-slate-800">3) 오늘 결과 / 현재 진도</p>
+                      <p className="text-sm font-semibold text-slate-800">3) 결과 보기</p>
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                           <p className="text-[11px] text-slate-500">오늘 체크</p>
@@ -1392,7 +1392,7 @@ export default function App() {
                           className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white"
                           onClick={() => setDetailPage('history')}
                         >
-                          기록/설정 보기
+                          전체 기록 보기
                         </button>
                       </div>
                     </div>
@@ -1401,7 +1401,7 @@ export default function App() {
                     {detailPage === 'history' && (
                     <details className="rounded-xl border border-toss-border bg-white p-4 shadow-sm" open>
                       <summary className="cursor-pointer text-sm font-semibold text-slate-800">
-                        4) 프로젝트 설정 / 캘린더 / 진행 기록 보기
+                        4) 전체 기록 (프로젝트 설정/캘린더/진행기록)
                       </summary>
                       <div className="mt-3 space-y-3">
                         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
