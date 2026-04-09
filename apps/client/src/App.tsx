@@ -1175,156 +1175,64 @@ export default function App() {
 
           {selectedProject && (
             <section className="space-y-3 px-4 pb-10 sm:px-6 lg:px-8">
-              <h3 className="text-lg font-bold text-slate-900">목표 상세</h3>
-              <div className="rounded-xl border border-toss-border bg-white p-4 text-center">
-                <p className="text-sm font-semibold text-emerald-700">좋은 습관 만들기</p>
-                <p className="mt-1 text-sm font-semibold text-emerald-700">
-                  {activeStage(selectedProject).stageNumber}단계
-                </p>
-                <p className="mt-2 text-base font-semibold leading-snug text-slate-800 sm:text-lg">
-                  목표 : {selectedProject.name} -{' '}
-                  {(() => {
-                    const st = activeStage(selectedProject);
-                    if (st.title?.trim()) return st.title.trim();
-                    if (st.needsSetup) return '다음 단계 설정';
-                    return '—';
-                  })()}
-                </p>
-              </div>
-
               {(() => {
                 const current = activeStage(selectedProject);
+                const currentRate = stageRate(current);
                 const canCheckToday = isStageWindowToday(current, today) && !current.completed && !current.needsSetup;
                 const doneTodayUi = effectivelyCompletedToday(selectedProject, current, today);
+                const stageTitle = current.title?.trim() || (current.needsSetup ? '다음 단계 설정' : '—');
                 return (
-                  <div className="rounded-xl border border-toss-border bg-white p-3 sm:p-4">
-                    <button
-                      type="button"
-                      className={`w-full rounded-xl border-2 py-3 font-medium ${
-                        doneTodayUi
-                          ? 'border-emerald-500 bg-emerald-500 text-white'
-                          : 'border-emerald-300 bg-slate-100 text-slate-700'
-                      } ${canCheckToday || doneTodayUi ? '' : 'border-emerald-300 opacity-60'}`}
-                      onClick={() => toggleTodayOnActiveStage(selectedProject.id)}
-                      disabled={!canCheckToday}
-                    >
-                      {doneTodayUi ? '오늘 완료했어요' : checkButtonLabel}
-                    </button>
-                    {!canCheckToday && !doneTodayUi && (
-                      <div className="mt-2 space-y-1 text-center text-xs font-medium leading-relaxed text-red-600">
-                        {current.needsSetup ? (
-                          <>
-                            <p>다음 단계는 설정을 마치면 내일부터 시작돼요.</p>
-                            <p>내일부터 여기서 하루 체크를 이어가실 수 있어요.</p>
-                          </>
-                        ) : (
-                          <p>다음 단계로 이동하여 내일부터 다시 오늘 완료하기 체크를 할 수 있어요.</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-
-              <div className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
-                {editingProjectId === selectedProject.id ? (
-                  <form
-                    className="space-y-2"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      applyProjectNameEdit(selectedProject.id);
-                    }}
-                  >
-                    <input
-                      value={editingProjectName}
-                      onChange={(event) => setEditingProjectName(event.target.value)}
-                      className="w-full rounded-lg border border-toss-border px-3 py-2 bg-white"
-                      maxLength={30}
-                      placeholder="프로젝트 이름"
-                    />
-                    <div className="flex gap-2">
-                      <button type="submit" className="flex-1 rounded-lg bg-toss-blue text-white py-2 text-sm font-medium">
-                        이름 저장
-                      </button>
-                      <button
-                        type="button"
-                        className="flex-1 rounded-lg border border-slate-300 py-2 text-sm"
-                        onClick={() => setEditingProjectId(null)}
-                      >
-                        취소
-                      </button>
+                  <>
+                    <div className="rounded-xl border border-toss-border bg-white p-4">
+                      <p className="text-xs font-semibold tracking-wide text-toss-blue">오늘의 흐름</p>
+                      <h3 className="mt-1 text-lg font-bold text-slate-900">
+                        {selectedProject.name} · {current.stageNumber}단계
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-600">현재 목표: {stageTitle}</p>
                     </div>
-                  </form>
-                ) : (
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-toss-sub">위 정보 칸에 선택한 목표와 단계가 표시돼요</p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        className="shrink-0 rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-500"
-                        onClick={() => startEditProject(selectedProject)}
-                      >
-                        프로젝트명 수정
-                      </button>
-                      <button
-                        type="button"
-                        className="shrink-0 rounded-md border border-rose-200 px-2 py-1 text-xs text-rose-600"
-                        onClick={() => removeProject(selectedProject.id)}
-                      >
-                        이 목표 삭제
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <p className="text-sm text-toss-sub mt-1">
-                  기본 기간 {selectedProject.stageDurationDays}일 · 총 {selectedProject.stages.length}단계
-                </p>
-                <p className="text-sm text-toss-sub mt-1">기간 기준 달성률 {selectedProjectConfiguredRate}%</p>
-              </div>
 
-              <div className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
-                {(() => {
-                  const current = activeStage(selectedProject);
-                  const currentRate = stageRate(current);
-                  return (
-                    <>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                        <p className="shrink-0 text-sm font-semibold text-slate-800">
-                          {current.startDate} ~ {current.endDate}
-                        </p>
-                        <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:min-w-[200px]">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="relative h-3 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-200"
-                              role="progressbar"
-                              aria-valuenow={currentRate}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                              aria-label={`현재 단계 달성률 ${currentRate}%`}
-                            >
-                              <div
-                                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-[width] duration-500 ease-out"
-                                style={{ width: `${currentRate}%` }}
-                              />
-                            </div>
-                            <span className="w-12 shrink-0 text-right text-sm font-bold tabular-nums text-toss-blue">
-                              {currentRate}%
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-toss-sub sm:text-right">현재 단계 달성률</p>
+                    <div className="rounded-xl border-2 border-emerald-300 bg-white p-3 sm:p-4">
+                      <p className="text-sm font-semibold text-emerald-700">1) 오늘 완료 체크</p>
+                      <button
+                        type="button"
+                        className={`mt-2 w-full rounded-xl border-2 py-3 font-medium ${
+                          doneTodayUi
+                            ? 'border-emerald-500 bg-emerald-500 text-white'
+                            : 'border-emerald-300 bg-slate-100 text-slate-700'
+                        } ${canCheckToday || doneTodayUi ? '' : 'border-emerald-300 opacity-60'}`}
+                        onClick={() => toggleTodayOnActiveStage(selectedProject.id)}
+                        disabled={!canCheckToday}
+                      >
+                        {doneTodayUi ? '오늘 완료했어요' : checkButtonLabel}
+                      </button>
+                      {!canCheckToday && !doneTodayUi && (
+                        <div className="mt-2 space-y-1 text-center text-xs font-medium leading-relaxed text-red-600">
+                          {current.needsSetup ? (
+                            <>
+                              <p>다음 단계는 설정을 마치면 내일부터 시작돼요.</p>
+                              <p>내일부터 여기서 하루 체크를 이어가실 수 있어요.</p>
+                            </>
+                          ) : (
+                            <p>다음 단계로 이동하여 내일부터 다시 오늘 완료하기 체크를 할 수 있어요.</p>
+                          )}
                         </div>
-                      </div>
-                      {current.needsSetup && (
+                      )}
+                    </div>
+
+                    <div
+                      className={`rounded-xl border-2 bg-white p-3 ${
+                        current.needsSetup ? 'border-emerald-300' : 'border-slate-200'
+                      }`}
+                    >
+                      <p className="text-sm font-semibold text-emerald-700">2) 다음 단계 세팅</p>
+                      {current.needsSetup ? (
                         <form
-                          className={`mt-3 space-y-2 rounded-xl border-2 bg-white p-3 ${
-                            displayTodayRate === 100 ? 'border-emerald-500' : 'border-emerald-300'
-                          }`}
+                          className="mt-2 space-y-2"
                           onSubmit={(event) => {
                             event.preventDefault();
                             setupActiveStage(selectedProject.id, nextStageTitle, nextStageDays);
                           }}
                         >
-                          <p className="text-sm font-medium">다음 단계 설정</p>
                           <input
                             value={nextStageTitle}
                             onChange={(event) => setNextStageTitle(event.target.value)}
@@ -1342,11 +1250,6 @@ export default function App() {
                                 {suggestion}
                               </button>
                             ))}
-                          </div>
-                          <div className="rounded-lg bg-slate-50 border border-slate-200 p-2 text-xs text-slate-600">
-                            예시) 물 2L(7일) 성공 → 물 2.3L(7일) 도전
-                            <br />
-                            예시) 10분 독서(14일) 성공 → 15분 독서(14일) 도전
                           </div>
                           <p className="text-xs font-medium text-red-600">
                             안내: 지금 설정하는 다음 단계는 내일부터 시작되고, 오늘 성공한 기록은 그대로 유지돼요.
@@ -1371,110 +1274,198 @@ export default function App() {
                             이 목표로 시작
                           </button>
                         </form>
+                      ) : (
+                        <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                          다음 단계 설정이 완료되어 있어요. 오늘 체크를 이어서 진행해 주세요.
+                        </p>
                       )}
-                    </>
-                  );
-                })()}
-              </div>
+                    </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <div className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
-                  <h4 className="font-semibold">성공 캘린더 (최근 30일)</h4>
-                  <div className="mt-3 grid grid-cols-6 gap-1.5">
-                    {calendarKeys.map((dateKey) => {
-                      const foundStageNumber = selectedProjectDateStageMap.get(dateKey);
-                      const isToday = dateKey === today;
-                      return (
-                        <div
-                          key={dateKey}
-                          className={`h-10 rounded-md border text-[12px] text-center flex flex-col items-center justify-center ${
-                            foundStageNumber ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-slate-50 text-slate-500 border-slate-200'
-                          } ${isToday ? 'ring-2 ring-toss-blue/30' : ''}`}
-                          title={`${formatDateLabel(dateKey)} ${foundStageNumber ? `${foundStageNumber}단계 성공` : '기록 없음'}`}
-                        >
-                          <span>{formatDateLabel(dateKey)}</span>
-                          <span className="text-center leading-none">
-                            {foundStageNumber ? `${foundStageNumber}단계` : '-'}
-                          </span>
+                    <div className="rounded-xl border border-toss-border bg-white p-4">
+                      <p className="text-sm font-semibold text-slate-800">3) 오늘 결과 / 현재 진도</p>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <p className="text-[11px] text-slate-500">오늘 체크</p>
+                          <p className={`mt-1 text-lg font-bold ${doneTodayUi ? 'text-emerald-600' : 'text-rose-500'}`}>
+                            {doneTodayUi ? '완료' : '미완료'}
+                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <p className="text-[11px] text-slate-500">현재 단계 달성률</p>
+                          <p className="mt-1 text-lg font-bold text-toss-blue">{currentRate}%</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-3">
+                        <div
+                          className="relative h-3 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-200"
+                          role="progressbar"
+                          aria-valuenow={currentRate}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`현재 단계 달성률 ${currentRate}%`}
+                        >
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-[width] duration-500 ease-out"
+                            style={{ width: `${currentRate}%` }}
+                          />
+                        </div>
+                        <span className="w-12 shrink-0 text-right text-sm font-bold tabular-nums text-toss-blue">
+                          {currentRate}%
+                        </span>
+                      </div>
+                    </div>
 
-                <div className="rounded-xl border border-toss-border bg-white p-4 sm:p-5">
-                  <h4 className="font-semibold">진행 기록</h4>
-                  <ul className="mt-3 space-y-2">
-                    {selectedProject.stages.map((stage) => (
-                      <li key={stage.id} className="border border-slate-200 rounded-lg p-3">
-                        <p className="text-sm font-medium">
-                          {stage.stageNumber}단계 · {stage.title || '목표 미설정'}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {stage.startDate} ~ {stage.endDate}
-                        </p>
-                        <p className="text-sm mt-1">
-                          달성률 {stageRate(stage)}% · 성공 {stage.checkDates.length}회
-                        </p>
-                        {stage.failed && (
-                          <p className="text-xs mt-1 text-rose-600">이번 단계는 기간 내 미달성으로 종료됐어요</p>
-                        )}
-                        {stage.completed && !stage.failed && (
-                          <p className="text-xs mt-1 text-emerald-600">성공적으로 완료했어요</p>
-                        )}
-                        {editingStageId === stage.id ? (
-                          <form
-                            className="mt-2 space-y-2"
-                            onSubmit={(event) => {
-                              event.preventDefault();
-                              applyStageEdit(selectedProject.id, stage.id);
-                            }}
-                          >
-                            <input
-                              value={editingStageTitle}
-                              onChange={(event) => setEditingStageTitle(event.target.value)}
-                              className="w-full rounded-lg border border-toss-border px-3 py-2 text-sm bg-white"
-                              placeholder="수정할 목표를 입력해 주세요"
-                            />
-                            <select
-                              value={editingStageDays}
-                              onChange={(event) => setEditingStageDays(Number(event.target.value))}
-                              className="w-full rounded-lg border border-toss-border px-3 py-2 text-sm bg-white"
+                    <details className="rounded-xl border border-toss-border bg-white p-4">
+                      <summary className="cursor-pointer text-sm font-semibold text-slate-800">
+                        4) 프로젝트 설정 / 캘린더 / 진행 기록 보기
+                      </summary>
+                      <div className="mt-3 space-y-3">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          {editingProjectId === selectedProject.id ? (
+                            <form
+                              className="space-y-2"
+                              onSubmit={(event) => {
+                                event.preventDefault();
+                                applyProjectNameEdit(selectedProject.id);
+                              }}
                             >
-                              <option value={1}>1일</option>
-                              <option value={3}>3일</option>
-                              <option value={7}>7일</option>
-                              <option value={14}>14일</option>
-                              <option value={21}>21일</option>
-                              <option value={30}>30일</option>
-                            </select>
-                            <div className="flex gap-2">
-                              <button type="submit" className="flex-1 rounded-lg bg-toss-blue text-white py-2 text-sm font-medium">
-                                수정 저장
-                              </button>
-                              <button
-                                type="button"
-                                className="flex-1 rounded-lg border border-slate-300 py-2 text-sm"
-                                onClick={() => setEditingStageId(null)}
-                              >
-                                취소
-                              </button>
+                              <input
+                                value={editingProjectName}
+                                onChange={(event) => setEditingProjectName(event.target.value)}
+                                className="w-full rounded-lg border border-toss-border px-3 py-2 bg-white"
+                                maxLength={30}
+                                placeholder="프로젝트 이름"
+                              />
+                              <div className="flex gap-2">
+                                <button type="submit" className="flex-1 rounded-lg bg-toss-blue text-white py-2 text-sm font-medium">
+                                  이름 저장
+                                </button>
+                                <button
+                                  type="button"
+                                  className="flex-1 rounded-lg border border-slate-300 py-2 text-sm"
+                                  onClick={() => setEditingProjectId(null)}
+                                >
+                                  취소
+                                </button>
+                              </div>
+                            </form>
+                          ) : (
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <p className="text-sm text-toss-sub">기본 기간 {selectedProject.stageDurationDays}일 · 총 {selectedProject.stages.length}단계</p>
+                                <p className="mt-1 text-sm text-toss-sub">기간 기준 달성률 {selectedProjectConfiguredRate}%</p>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  className="shrink-0 rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-500"
+                                  onClick={() => startEditProject(selectedProject)}
+                                >
+                                  프로젝트명 수정
+                                </button>
+                                <button
+                                  type="button"
+                                  className="shrink-0 rounded-md border border-rose-200 px-2 py-1 text-xs text-rose-600"
+                                  onClick={() => removeProject(selectedProject.id)}
+                                >
+                                  이 목표 삭제
+                                </button>
+                              </div>
                             </div>
-                          </form>
-                        ) : (
-                          <button
-                            type="button"
-                            className="mt-2 rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
-                            onClick={() => startEditStage(stage)}
-                          >
-                            단계 수정하기
-                          </button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="rounded-lg border border-slate-200 bg-white p-3">
+                            <h4 className="font-semibold">성공 캘린더 (최근 30일)</h4>
+                            <div className="mt-3 grid grid-cols-6 gap-1.5">
+                              {calendarKeys.map((dateKey) => {
+                                const foundStageNumber = selectedProjectDateStageMap.get(dateKey);
+                                const isToday = dateKey === today;
+                                return (
+                                  <div
+                                    key={dateKey}
+                                    className={`h-10 rounded-md border text-[12px] text-center flex flex-col items-center justify-center ${
+                                      foundStageNumber ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-slate-50 text-slate-500 border-slate-200'
+                                    } ${isToday ? 'ring-2 ring-toss-blue/30' : ''}`}
+                                    title={`${formatDateLabel(dateKey)} ${foundStageNumber ? `${foundStageNumber}단계 성공` : '기록 없음'}`}
+                                  >
+                                    <span>{formatDateLabel(dateKey)}</span>
+                                    <span className="text-center leading-none">{foundStageNumber ? `${foundStageNumber}단계` : '-'}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="rounded-lg border border-slate-200 bg-white p-3">
+                            <h4 className="font-semibold">진행 기록</h4>
+                            <ul className="mt-3 space-y-2">
+                              {selectedProject.stages.map((stage) => (
+                                <li key={stage.id} className="border border-slate-200 rounded-lg p-3">
+                                  <p className="text-sm font-medium">{stage.stageNumber}단계 · {stage.title || '목표 미설정'}</p>
+                                  <p className="text-xs text-slate-500 mt-1">{stage.startDate} ~ {stage.endDate}</p>
+                                  <p className="text-sm mt-1">달성률 {stageRate(stage)}% · 성공 {stage.checkDates.length}회</p>
+                                  {stage.failed && <p className="text-xs mt-1 text-rose-600">이번 단계는 기간 내 미달성으로 종료됐어요</p>}
+                                  {stage.completed && !stage.failed && <p className="text-xs mt-1 text-emerald-600">성공적으로 완료했어요</p>}
+                                  {editingStageId === stage.id ? (
+                                    <form
+                                      className="mt-2 space-y-2"
+                                      onSubmit={(event) => {
+                                        event.preventDefault();
+                                        applyStageEdit(selectedProject.id, stage.id);
+                                      }}
+                                    >
+                                      <input
+                                        value={editingStageTitle}
+                                        onChange={(event) => setEditingStageTitle(event.target.value)}
+                                        className="w-full rounded-lg border border-toss-border px-3 py-2 text-sm bg-white"
+                                        placeholder="수정할 목표를 입력해 주세요"
+                                      />
+                                      <select
+                                        value={editingStageDays}
+                                        onChange={(event) => setEditingStageDays(Number(event.target.value))}
+                                        className="w-full rounded-lg border border-toss-border px-3 py-2 text-sm bg-white"
+                                      >
+                                        <option value={1}>1일</option>
+                                        <option value={3}>3일</option>
+                                        <option value={7}>7일</option>
+                                        <option value={14}>14일</option>
+                                        <option value={21}>21일</option>
+                                        <option value={30}>30일</option>
+                                      </select>
+                                      <div className="flex gap-2">
+                                        <button type="submit" className="flex-1 rounded-lg bg-toss-blue text-white py-2 text-sm font-medium">
+                                          수정 저장
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="flex-1 rounded-lg border border-slate-300 py-2 text-sm"
+                                          onClick={() => setEditingStageId(null)}
+                                        >
+                                          취소
+                                        </button>
+                                      </div>
+                                    </form>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="mt-2 rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
+                                      onClick={() => startEditStage(stage)}
+                                    >
+                                      단계 수정하기
+                                    </button>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </details>
+                  </>
+                );
+              })()}
             </section>
           )}
         </>
