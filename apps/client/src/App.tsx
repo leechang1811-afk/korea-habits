@@ -98,6 +98,20 @@ function stageRateByConfiguredPeriod(stage: Stage, periodDays: number, today: st
   return Math.min(100, Math.round((done / plannedDays) * 100));
 }
 
+function recentWindowStatsForProject(project: HabitProject, today: string, windowDays: number = 30): { done: number; planned: number; rate: number } {
+  const start = addDays(today, -(windowDays - 1));
+  let planned = 0;
+  let done = 0;
+  for (let day = start; day <= today; day = addDays(day, 1)) {
+    const stageForDay = project.stages.find((stage) => day >= stage.startDate && day <= stage.endDate);
+    if (!stageForDay) continue;
+    planned += 1;
+    if (stageForDay.checkDates.includes(day)) done += 1;
+  }
+  const rate = planned > 0 ? Math.round((done / planned) * 100) : 0;
+  return { done, planned, rate };
+}
+
 function isStageWindowToday(stage: Stage, today: string): boolean {
   return today >= stage.startDate && today <= stage.endDate;
 }
@@ -128,7 +142,7 @@ function isCheckedTodayOnCurrentStage(current: Stage, todayKey: string): boolean
 
 /** 다음 단계가 "내일부터 시작" 상태일 때만 수정 허용 (시작 당일 이후 수정 불가) */
 function canEditUpcomingStage(stage: Stage, todayKey: string): boolean {
-  return !stage.needsSetup && !stage.completed && !stage.failed && stage.startDate > todayKey;
+  return !stage.needsSetup && !stage.completed && !stage.failed && stage.startDate === addDays(todayKey, 1);
 }
 
 function stageProgressDays(stage: Stage): { done: number; planned: number } {
@@ -790,15 +804,19 @@ export default function App() {
   }, [overallTodayRate, state.projects.length, todayProjectStatus.length]);
   const selectedProjectConfiguredRate = useMemo(() => {
     if (!selectedProject) return 0;
-    return stageRateByConfiguredPeriod(activeStage(selectedProject), selectedProject.stageDurationDays, today);
+    return recentWindowStatsForProject(selectedProject, today, 30).rate;
   }, [selectedProject, today]);
   const overallProjectProgressRate = useMemo(() => {
     if (state.projects.length === 0) return 0;
-    const sum = state.projects.reduce((acc, project) => {
-      return acc + stageRate(activeStage(project));
-    }, 0);
-    return Math.round(sum / state.projects.length);
-  }, [state.projects]);
+    const { done, planned } = state.projects.reduce(
+      (acc, project) => {
+        const stats = recentWindowStatsForProject(project, today, 30);
+        return { done: acc.done + stats.done, planned: acc.planned + stats.planned };
+      },
+      { done: 0, planned: 0 }
+    );
+    return planned > 0 ? Math.round((done / planned) * 100) : 0;
+  }, [state.projects, today]);
   const dashboardRate = overallProjectProgressRate;
   const displayRate = Math.min(94, Math.max(6, dashboardRate));
   const stairHeights = [12, 20, 31, 45, 60, 76, 94];
@@ -1521,7 +1539,7 @@ export default function App() {
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
                                 <p className="text-sm text-toss-sub">기본 기간 {selectedProject.stageDurationDays}일 · 총 {selectedProject.stages.length}단계</p>
-                                <p className="mt-1 text-sm text-toss-sub">기간 기준 달성률 {selectedProjectConfiguredRate}%</p>
+                                <p className="mt-1 text-sm text-toss-sub">최근 30일 기준 달성률 {selectedProjectConfiguredRate}%</p>
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
                                 <button
