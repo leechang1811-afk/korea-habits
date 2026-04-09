@@ -30,6 +30,7 @@ type HabitProject = {
 type AppState = {
   projects: HabitProject[];
 };
+type ProjectFlowStep = 'check' | 'setup' | 'result' | 'history';
 
 const STORAGE_KEY = 'korea-habit-projects-v2';
 const GOALS_PER_PAGE = 5;
@@ -113,6 +114,11 @@ function willReachFullStageAfterTodayCheck(stage: Stage, todayKey: string): bool
 function activeStage(project: HabitProject): Stage {
   const next = project.stages.find((stage) => !stage.completed && !stage.failed);
   return next ?? project.stages[project.stages.length - 1];
+}
+
+/** 목표 전용 원페이지 진입 시 기본 단계 (시나리오 1: 첫 진입) */
+function entryFlowStepForProject(stage: Stage): ProjectFlowStep {
+  return stage.needsSetup ? 'setup' : 'check';
 }
 
 /** 현재 활성 단계에서 오늘 체크가 실제로 찍혀 있는지 */
@@ -364,7 +370,7 @@ export default function App() {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingProjectName, setEditingProjectName] = useState('');
   const [navLogoFailed, setNavLogoFailed] = useState(false);
-  const [projectFlowStep, setProjectFlowStep] = useState<'check' | 'setup' | 'result' | 'history'>('check');
+  const [projectFlowStep, setProjectFlowStep] = useState<ProjectFlowStep>('check');
   /** 토스/샌드박스 WebView — 표준 내비가 있으므로 웹 전용 상단 브랜딩은 숨김 */
   const [inTossMiniApp, setInTossMiniApp] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -539,12 +545,15 @@ export default function App() {
   useEffect(() => {
     if (!selectedProject) return;
     const current = activeStage(selectedProject);
-    if (current.needsSetup) {
-      setProjectFlowStep('setup');
-      return;
-    }
-    setProjectFlowStep('check');
+    setProjectFlowStep(entryFlowStepForProject(current));
   }, [selectedProject, selectedProjectId]);
+
+  function returnToHomeAfter(delayMs: number): void {
+    window.setTimeout(() => {
+      setView('list');
+      scrollToTop();
+    }, delayMs);
+  }
 
   const selectedCurrentStage = useMemo(() => {
     if (!selectedProject) return null;
@@ -636,17 +645,16 @@ export default function App() {
         `${current.stageNumber}단계 완주, 정말 멋져요.\n꾸준함이 빛났어요.\n앞으로도 화이팅!`,
         2800
       );
+      // 시나리오 3: 단계 완료 시 다음 단계 세팅으로 유도
       if (view === 'project') setProjectFlowStep('setup');
       track('stage_completed_100', { stage_number: current.stageNumber, celebration_level: level });
     } else if (addingTodayCheck && current) {
       fireTodayHabitCheck();
       showCelebration('오늘도 약속 지키셨네요.\n작은 승리가 쌓여요.\n응원할게요!', 2800);
       if (view === 'project') {
+        // 시나리오 2: 일반 오늘 체크 성공 시 결과를 짧게 보여준 뒤 홈 복귀
         setProjectFlowStep('result');
-        window.setTimeout(() => {
-          setView('list');
-          scrollToTop();
-        }, 900);
+        returnToHomeAfter(900);
       }
       track('stage_today_checked', { project_id: projectId });
     }
@@ -679,11 +687,9 @@ export default function App() {
     fireNextStageStart();
     showCelebration('새 도전이 시작됐어요.\n지금까지 온 힘으로 한 걸음 더,\n화이팅!', 2800);
     if (view === 'project') {
+      // 시나리오 4: 다음 단계 세팅 완료 시 결과 확인 후 홈 복귀
       setProjectFlowStep('result');
-      window.setTimeout(() => {
-        setView('list');
-        scrollToTop();
-      }, 1100);
+      returnToHomeAfter(1100);
     }
     track('stage_setup', { duration_days: durationDays });
   }
@@ -1159,7 +1165,7 @@ export default function App() {
                             setSelectedProjectId(project.id);
                             setView('project');
                             const next = activeStage(project);
-                            setProjectFlowStep(next.needsSetup ? 'setup' : 'check');
+                            setProjectFlowStep(entryFlowStepForProject(next));
                             scrollToTop();
                           }}
                           className={`min-h-[3.25rem] min-w-0 flex-1 rounded-xl border px-2 py-2 text-left text-sm font-medium transition-colors ${
@@ -1413,6 +1419,16 @@ export default function App() {
                         </span>
                       </div>
                       <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          className="mr-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700"
+                          onClick={() => {
+                            setView('list');
+                            scrollToTop();
+                          }}
+                        >
+                          홈으로
+                        </button>
                         <button
                           type="button"
                           className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white"
