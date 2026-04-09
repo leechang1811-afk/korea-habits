@@ -52,6 +52,8 @@ function tryAttach(
   ensureTossAdsInit(sdk).then((ok) => {
     if (isAborted() || !ok || !container.isConnected) return;
     try {
+      // 이전 슬롯 DOM 잔존 시 attach가 실패하거나 레이아웃이 틀어질 수 있어 초기화
+      container.replaceChildren();
       const result = sdk.TossAds.attachBanner(AD_GROUP_BANNER, container, {
         theme: 'light',
         tone: 'grey',
@@ -97,6 +99,13 @@ export default function BannerAd({ refreshKey = '0' }: BannerAdProps) {
           tryAttach(sdk, container, (destroy) => {
             destroyRef.current = destroy;
           }, isAborted);
+          // 첫 attach가 네트워크/SDK 타이밍으로 누락될 때를 대비해 1회 보수 재시도
+          window.setTimeout(() => {
+            if (cancelled || destroyRef.current) return;
+            tryAttach(sdk, container, (destroy) => {
+              destroyRef.current = destroy;
+            }, isAborted);
+          }, 1200);
         })
         .catch(() => {});
     }, 600);
