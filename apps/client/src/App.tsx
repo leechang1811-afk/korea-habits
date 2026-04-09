@@ -131,6 +131,12 @@ function canEditUpcomingStage(stage: Stage, todayKey: string): boolean {
   return !stage.needsSetup && !stage.completed && !stage.failed && stage.startDate > todayKey;
 }
 
+function stageProgressDays(stage: Stage): { done: number; planned: number } {
+  const planned = daysInclusive(stage.startDate, stage.endDate);
+  const done = stage.checkDates.filter((d) => d >= stage.startDate && d <= stage.endDate).length;
+  return { done, planned };
+}
+
 function safeLoadState(): AppState {
   if (typeof window === 'undefined') return { projects: [] };
   try {
@@ -194,6 +200,15 @@ function resolveStageByDeadline(project: HabitProject, today: string): HabitProj
   const rate = stageRate(current);
   if (rate >= 100) {
     return maybeAdvanceStage(project, current.endDate);
+  }
+
+  // 50% 이상이면 통과로 간주하고 다음 단계(세팅 대기)로 넘어감
+  if (rate >= 50) {
+    const passedStages = project.stages.map((stage) =>
+      stage.id === current.id ? { ...stage, completed: true, failed: false } : stage
+    );
+    const next = buildNextStage(current, current.stageNumber + 1, project.stageDurationDays, today);
+    return { ...project, stages: [...passedStages, next] };
   }
 
   const failedStages = project.stages.map((stage) =>
@@ -801,6 +816,26 @@ export default function App() {
     }
     return map;
   }, [selectedProject]);
+  const selectedProjectCalendarStatusMap = useMemo(() => {
+    if (!selectedProject) return new Map<string, 'success' | 'missed' | 'future'>();
+    const map = new Map<string, 'success' | 'missed' | 'future'>();
+    for (const stage of selectedProject.stages) {
+      const start = stage.startDate;
+      const end = stage.endDate;
+      for (let cursor = start; cursor <= end; cursor = addDays(cursor, 1)) {
+        if (stage.checkDates.includes(cursor)) {
+          map.set(cursor, 'success');
+          continue;
+        }
+        if (cursor > today) {
+          if (!map.has(cursor)) map.set(cursor, 'future');
+          continue;
+        }
+        if (!map.has(cursor)) map.set(cursor, 'missed');
+      }
+    }
+    return map;
+  }, [selectedProject, today]);
 
   const goalPageMax = Math.max(0, Math.ceil(state.projects.length / GOALS_PER_PAGE) - 1);
   const goalPageStart = goalPage * GOALS_PER_PAGE;
@@ -1146,6 +1181,7 @@ export default function App() {
                       const doneToday = project.stages.some((stage) => stage.checkDates.includes(today));
                       const isSelected = project.id === selectedProjectId;
                       const rate = stageRate(current);
+                      const { done, planned } = stageProgressDays(current);
                       return (
                         <button
                           key={project.id}
@@ -1169,7 +1205,7 @@ export default function App() {
                               isSelected ? 'text-white/90' : doneToday ? 'text-emerald-600' : 'text-rose-500'
                             }`}
                           >
-                            오늘 {doneToday ? 'O' : 'X'} · {rate}%
+                            오늘 {doneToday ? 'O' : 'X'} · {done}/{planned}일 · {rate}%
                           </span>
                         </button>
                       );
@@ -1393,6 +1429,7 @@ export default function App() {
                     {projectFlowStep === 'result' && (
                     <div className="rounded-xl border border-toss-border bg-white p-4 shadow-sm">
                       <p className="text-sm font-semibold text-slate-800">3) 결과 보기</p>
+                      <p className="mt-1 text-xs font-medium text-slate-500">현재 단계 진행: {doneDays}일 / {plannedDays}일</p>
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                           <p className="text-[11px] text-slate-500">오늘 체크</p>
@@ -1513,16 +1550,24 @@ export default function App() {
                               {calendarKeys.map((dateKey) => {
                                 const foundStageNumber = selectedProjectDateStageMap.get(dateKey);
                                 const isToday = dateKey === today;
+                                const status = selectedProjectCalendarStatusMap.get(dateKey);
+                                const isMissed = status === 'missed';
                                 return (
                                   <div
                                     key={dateKey}
                                     className={`h-10 rounded-md border text-[12px] text-center flex flex-col items-center justify-center ${
-                                      foundStageNumber ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-slate-50 text-slate-500 border-slate-200'
+                                      foundStageNumber
+                                        ? 'bg-emerald-500 text-white border-emerald-500'
+                                        : isMissed
+                                          ? 'bg-rose-50 text-rose-600 border-rose-200'
+                                          : 'bg-slate-50 text-slate-500 border-slate-200'
                                     } ${isToday ? 'ring-2 ring-toss-blue/30' : ''}`}
                                     title={`${formatDateLabel(dateKey)} ${foundStageNumber ? `${foundStageNumber}단계 성공` : '기록 없음'}`}
                                   >
                                     <span>{formatDateLabel(dateKey)}</span>
-                                    <span className="text-center leading-none">{foundStageNumber ? `${foundStageNumber}단계` : '-'}</span>
+                                    <span className="text-center leading-none">
+                                      {foundStageNumber ? `${foundStageNumber}단계` : isMissed ? 'X' : '-'}
+                                    </span>
                                   </div>
                                 );
                               })}
