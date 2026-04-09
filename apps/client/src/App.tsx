@@ -1287,16 +1287,19 @@ export default function App() {
                         <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">3 결과 보기</span>
                       </div>
                       {canEditUpcomingStage(current, today) && (
-                        <button
-                          type="button"
-                          className="mt-3 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"
-                          onClick={() => {
-                            startEditStage(current);
-                            setProjectFlowStep('history');
-                          }}
-                        >
-                          내일 적용 전 목표 바꾸기
-                        </button>
+                        <div className="mt-3">
+                          <button
+                            type="button"
+                            className="rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"
+                            onClick={() => {
+                              startEditStage(current);
+                              setProjectFlowStep('history');
+                            }}
+                          >
+                            내일 적용 전 목표 바꾸기
+                          </button>
+                          <p className="mt-1 text-[11px] font-medium text-amber-600">수정 가능: 오늘 23:59까지</p>
+                        </div>
                       )}
                     </div>
 
