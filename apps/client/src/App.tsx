@@ -760,13 +760,14 @@ export default function App() {
   const overallTodayRate = useMemo(() => {
     if (state.projects.length === 0) return 0;
     const done = state.projects.filter((project) => {
-      return project.stages.some((stage) => stage.checkDates.includes(today));
+      const current = activeStage(project);
+      return isCheckedTodayOnCurrentStage(current, today);
     }).length;
     return Math.round((done / state.projects.length) * 100);
   }, [state.projects, today]);
   const todayProjectStatus = useMemo(() => {
     return state.projects.map((project) => {
-      const doneToday = project.stages.some((stage) => stage.checkDates.includes(today));
+      const doneToday = isCheckedTodayOnCurrentStage(activeStage(project), today);
       return {
         projectId: project.id,
         projectName: project.name,
@@ -1196,7 +1197,7 @@ export default function App() {
                   <div className="flex min-w-0 flex-1 gap-2">
                     {goalsOnPage.map((project) => {
                       const current = activeStage(project);
-                      const doneToday = project.stages.some((stage) => stage.checkDates.includes(today));
+                      const doneToday = isCheckedTodayOnCurrentStage(current, today);
                       const isSelected = project.id === selectedProjectId;
                       const rate = stageRate(current);
                       const { done, planned } = stageProgressDays(current);
@@ -1285,6 +1286,18 @@ export default function App() {
                         <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">2 준비하기</span>
                         <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">3 결과 보기</span>
                       </div>
+                      {canEditUpcomingStage(current, today) && (
+                        <button
+                          type="button"
+                          className="mt-3 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"
+                          onClick={() => {
+                            startEditStage(current);
+                            setProjectFlowStep('history');
+                          }}
+                        >
+                          내일 적용 전 목표 바꾸기
+                        </button>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-4 gap-2 rounded-xl border border-toss-border bg-white p-2 shadow-sm">
