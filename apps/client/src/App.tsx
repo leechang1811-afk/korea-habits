@@ -313,7 +313,7 @@ function rebalanceProjectAfterStageEdit(project: HabitProject, stageId: string, 
 type ShotInitRef = {
   shot: string | null;
   state: AppState;
-  view: 'create' | 'list';
+  view: 'create' | 'list' | 'project';
   selected: string | null;
   celebration?: string;
   celebrationConfetti?: 'success' | 'today' | 'next';
@@ -351,7 +351,7 @@ export default function App() {
   const screenshotShotKey = shotInit.shot;
 
   const [state, setState] = useState<AppState>(() => shotInit.state);
-  const [view, setView] = useState<'create' | 'list'>(() => shotInit.view);
+  const [view, setView] = useState<'create' | 'list' | 'project'>(() => shotInit.view);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => shotInit.selected);
   const [goalPage, setGoalPage] = useState(0);
   const [projectName, setProjectName] = useState('');
@@ -368,7 +368,7 @@ export default function App() {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingProjectName, setEditingProjectName] = useState('');
   const [navLogoFailed, setNavLogoFailed] = useState(false);
-  const [detailPage, setDetailPage] = useState<'today' | 'setup' | 'result' | 'history'>('today');
+  const [projectFlowStep, setProjectFlowStep] = useState<'check' | 'setup' | 'result' | 'history'>('check');
   /** 토스/샌드박스 WebView — 표준 내비가 있으므로 웹 전용 상단 브랜딩은 숨김 */
   const [inTossMiniApp, setInTossMiniApp] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -544,10 +544,10 @@ export default function App() {
     if (!selectedProject) return;
     const current = activeStage(selectedProject);
     if (current.needsSetup) {
-      setDetailPage('setup');
+      setProjectFlowStep('setup');
       return;
     }
-    setDetailPage('today');
+    setProjectFlowStep('check');
   }, [selectedProject, selectedProjectId]);
 
   const selectedCurrentStage = useMemo(() => {
@@ -640,12 +640,18 @@ export default function App() {
         `${current.stageNumber}단계 완주, 정말 멋져요.\n꾸준함이 빛났어요.\n앞으로도 화이팅!`,
         2800
       );
-      setDetailPage('result');
+      if (view === 'project') setProjectFlowStep('setup');
       track('stage_completed_100', { stage_number: current.stageNumber, celebration_level: level });
     } else if (addingTodayCheck && current) {
       fireTodayHabitCheck();
       showCelebration('오늘도 약속 지키셨네요.\n작은 승리가 쌓여요.\n응원할게요!', 2800);
-      setDetailPage('result');
+      if (view === 'project') {
+        setProjectFlowStep('result');
+        window.setTimeout(() => {
+          setView('list');
+          scrollToTop();
+        }, 900);
+      }
       track('stage_today_checked', { project_id: projectId });
     }
     track('stage_toggle_today');
@@ -676,7 +682,13 @@ export default function App() {
     setNextStageTitle('');
     fireNextStageStart();
     showCelebration('새 도전이 시작됐어요.\n지금까지 온 힘으로 한 걸음 더,\n화이팅!', 2800);
-    setDetailPage('today');
+    if (view === 'project') {
+      setProjectFlowStep('result');
+      window.setTimeout(() => {
+        setView('list');
+        scrollToTop();
+      }, 1100);
+    }
     track('stage_setup', { duration_days: durationDays });
   }
 
@@ -1107,9 +1119,9 @@ export default function App() {
         </section>
       )}
 
-      {view === 'list' && (
+      {(view === 'list' || view === 'project') && (
         <>
-          <section className="px-4 pb-4 pt-2 sm:px-6 lg:px-8">
+          <section className={`${view === 'list' ? '' : 'hidden'} px-4 pb-4 pt-2 sm:px-6 lg:px-8`}>
             <div className="mb-3 text-center">
               <h3 className="font-semibold">나의 전체 목표 개요</h3>
               <p className="mt-1 text-xs text-toss-sub">
@@ -1147,7 +1159,13 @@ export default function App() {
                         <button
                           key={project.id}
                           type="button"
-                          onClick={() => setSelectedProjectId(project.id)}
+                          onClick={() => {
+                            setSelectedProjectId(project.id);
+                            setView('project');
+                            const next = activeStage(project);
+                            setProjectFlowStep(next.needsSetup ? 'setup' : 'check');
+                            scrollToTop();
+                          }}
                           className={`min-h-[3.25rem] min-w-0 flex-1 rounded-xl border px-2 py-2 text-left text-sm font-medium transition-colors ${
                             isSelected
                               ? 'border-toss-blue bg-toss-blue text-white'
@@ -1188,7 +1206,7 @@ export default function App() {
           </section>
 
           {selectedProject && (
-            <section className="space-y-4 px-4 pb-10 sm:px-6 lg:px-8">
+            <section className={`${view === 'project' ? '' : 'hidden'} space-y-4 px-4 pb-10 sm:px-6 lg:px-8`}>
               {(() => {
                 const current = activeStage(selectedProject);
                 const currentRate = stageRate(current);
@@ -1213,35 +1231,35 @@ export default function App() {
                     <div className="grid grid-cols-4 gap-2 rounded-xl border border-toss-border bg-white p-2 shadow-sm">
                       <button
                         type="button"
-                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'today' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
-                        onClick={() => setDetailPage('today')}
+                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${projectFlowStep === 'check' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
+                        onClick={() => setProjectFlowStep('check')}
                       >
                         오늘 할 일
                       </button>
                       <button
                         type="button"
-                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'setup' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
-                        onClick={() => setDetailPage('setup')}
+                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${projectFlowStep === 'setup' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
+                        onClick={() => setProjectFlowStep('setup')}
                       >
                         준비하기
                       </button>
                       <button
                         type="button"
-                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'result' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
-                        onClick={() => setDetailPage('result')}
+                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${projectFlowStep === 'result' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
+                        onClick={() => setProjectFlowStep('result')}
                       >
                         결과 보기
                       </button>
                       <button
                         type="button"
-                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${detailPage === 'history' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
-                        onClick={() => setDetailPage('history')}
+                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${projectFlowStep === 'history' ? 'bg-toss-blue text-white' : 'bg-slate-100 text-slate-600'}`}
+                        onClick={() => setProjectFlowStep('history')}
                       >
                         전체 기록
                       </button>
                     </div>
 
-                    {detailPage === 'today' && (
+                    {projectFlowStep === 'check' && (
                     <div className="rounded-xl border-2 border-emerald-300 bg-white p-3 shadow-sm sm:p-4">
                       <p className="text-sm font-semibold text-emerald-700">1) 오늘 할 일</p>
                       <button
@@ -1272,7 +1290,7 @@ export default function App() {
                         <button
                           type="button"
                           className="rounded-lg bg-toss-blue px-3 py-2 text-xs font-semibold text-white"
-                          onClick={() => setDetailPage(current.needsSetup ? 'setup' : 'result')}
+                          onClick={() => setProjectFlowStep(current.needsSetup ? 'setup' : 'result')}
                         >
                           준비하기
                         </button>
@@ -1280,7 +1298,7 @@ export default function App() {
                     </div>
                     )}
 
-                    {detailPage === 'setup' && (
+                    {projectFlowStep === 'setup' && (
                     <div
                       className={`rounded-xl border-2 bg-white p-3 shadow-sm ${
                         current.needsSetup ? 'border-emerald-300' : 'border-slate-200'
@@ -1345,7 +1363,7 @@ export default function App() {
                         <button
                           type="button"
                           className="rounded-lg bg-toss-blue px-3 py-2 text-xs font-semibold text-white"
-                          onClick={() => setDetailPage('result')}
+                          onClick={() => setProjectFlowStep('result')}
                         >
                           결과 확인
                         </button>
@@ -1353,7 +1371,7 @@ export default function App() {
                     </div>
                     )}
 
-                    {detailPage === 'result' && (
+                    {projectFlowStep === 'result' && (
                     <div className="rounded-xl border border-toss-border bg-white p-4 shadow-sm">
                       <p className="text-sm font-semibold text-slate-800">3) 결과 보기</p>
                       <div className="mt-2 grid grid-cols-2 gap-2">
@@ -1390,7 +1408,7 @@ export default function App() {
                         <button
                           type="button"
                           className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white"
-                          onClick={() => setDetailPage('history')}
+                          onClick={() => setProjectFlowStep('history')}
                         >
                           전체 기록 보기
                         </button>
@@ -1398,7 +1416,7 @@ export default function App() {
                     </div>
                     )}
 
-                    {detailPage === 'history' && (
+                    {projectFlowStep === 'history' && (
                     <details className="rounded-xl border border-toss-border bg-white p-4 shadow-sm" open>
                       <summary className="cursor-pointer text-sm font-semibold text-slate-800">
                         4) 전체 기록 (프로젝트 설정/캘린더/진행기록)
