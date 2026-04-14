@@ -28,7 +28,7 @@ const AD_GROUP_INTERSTITIAL =
   (USE_TEST_AD_IDS ? TEST_AD.interstitial : 'ait.v2.live.ec8754e569b4450ce');
 const AD_GROUP_REWARDED =
   import.meta.env.VITE_AD_GROUP_REWARDED ??
-  (USE_TEST_AD_IDS ? TEST_AD.rewarded : 'ait.v2.live.aa19920554fe4121');
+  (USE_TEST_AD_IDS ? TEST_AD.rewarded : 'ait.v2.live.ec8754e569b4450ce');
 export const AD_GROUP_BANNER =
   import.meta.env.VITE_AD_GROUP_BANNER ??
   (USE_TEST_AD_IDS ? TEST_AD.banner : 'ait.v2.live.2c66bc8b68cc4562');
